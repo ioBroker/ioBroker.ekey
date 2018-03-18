@@ -1,0 +1,144 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- Materialze style -->
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
+    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+
+    <script type="text/javascript" src="../../js/translate.js"></script>
+    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+    <script type="text/javascript" src="words.js"></script>
+    
+<script type="text/javascript">
+    function readDevices(onChange) {
+        $('.table-button-scan').addClass('disabled');
+
+        sendTo(null, 'browse', null, function (list) {
+            $('.table-button-scan').removeClass('disabled');
+            $('.progress-bar').hide();
+
+            if (list.error) {
+                showError(_(list.error));
+                return;
+            }
+
+            var devices = table2values('devices');
+            var added = 0;
+            if (list.result) {
+                for (var j = 0; j < list.result.length; j++) {
+                    var found = false;
+                    for (var d = 0; d < devices; d++) {
+                        if (devices[d].ip === list.result[j].ip) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        added++;
+                        devices.push({ip: list.result[j].ip});
+                    }
+                }
+            }
+
+            if (added) {
+                values2table('devices', devices, onChange);
+                showToast(null, _('Found %s devices. Added %d new devices.', list.length, added));
+            } else {
+                if (list && list.length) {
+                    showToast(null, _('Found %s devices. Nothing new.',  list.length));
+                } else {
+                    showToast(null, _('No devices found'));
+                }
+
+            }
+        });
+    }
+
+    function load(settings, onChange) {
+        if (!settings.type) settings.type = 'tcp';
+
+        $('.value').each(function () {
+            var key = $(this).attr('id');
+            var $key = $('#' + key + '.value');
+            if ($key.attr('type') === 'checkbox') {
+                $key.prop('checked', settings[key]).on('change', function() {
+                    onChange();
+                });
+            } else {
+                $key.val(settings[key]).on('change', function() {
+                    onChange();
+                }).on('keyup', function() {
+                    onChange();
+                });
+            }
+        });
+
+        $('.table-button-scan').addClass('disabled');
+
+        getIsAdapterAlive(function (isAlive) {
+            if (isAlive || common.enabled) {
+                $('.table-button-scan').removeClass('disabled').on('click', function () {
+                    readDevices(onChange);
+                });
+            }
+        });
+        showHideSettings();
+        onChange(false);
+        values2table('devices', settings.devices, onChange);
+    }
+
+    function save(callback) {
+        var obj = {};
+        $('.value').each(function () {
+            var $this = $(this);
+            if ($this.attr('type') === 'checkbox') {
+                obj[$this.attr('id')] = $this.prop('checked');
+            } else {
+                obj[$this.attr('id')] = $this.val();
+            }
+        });
+        obj.devices = table2values('devices');
+        callback(obj);
+    }
+</script>
+    <style>
+        .m .select-wrapper+label {
+            top: 100%;
+        }
+        .table-button-add {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="m adapter-container">
+    <div class="row">
+        <div class="col s12 m4 l2">
+            <img src="ekey.png" class="logo">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12" id="devices">
+            <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
+            <a class="btn-floating waves-effect waves-light blue table-button-scan translateT" title="Scan devices"><i class="material-icons">search</i></a>
+            <div class="table-values-div">
+                <table class="table-values">
+                    <thead>
+                    <tr>
+                        <th data-name="ip"   class="translate">IP</th>
+                        <th data-name="type" data-type="select" data-options="HOME;MULTI;RARE" class="translate">Protocol</th>
+                        <th data-buttons="delete"></th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

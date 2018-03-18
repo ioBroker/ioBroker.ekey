@@ -1,0 +1,32 @@
+{
+  "name": "iobroker.ekey",
+  "version": "0.1.0",
+  "description": "Connects ekey with ioBroker",
+  "author": "Bluefox <dogafox@gmail.com>",
+  "contributors": [],
+  "homepage": "",
+  "license": "MIT",
+  "keywords": [
+    "iobroker",
+    "ekey",
+    "iot"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ioBroker/ioBroker.ekey"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "mocha": "^5.0.0",
+    "chai": "^4.1.2"
+  },
+  "bugs": {
+    "url": "https://github.com/ioBroker/ioBroker.ekey/issues"
+  },
+  "main": "main.js",
+  "scripts": {
+    "test": "node node_modules/mocha/bin/mocha --exit"
+  }
+}

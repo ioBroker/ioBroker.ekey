@@ -1,0 +1,60 @@
+{
+    "common": {
+        "name":                     "ekey",
+        "version":                  "0.1.0",
+		"news": {
+            "0.1.0": {
+                "en": "initial version",
+                "de": "erste Version",
+                "ru": "Первоначальная версия",
+                "pt": "versão inicial",
+                "nl": "eerste versie",
+                "fr": "version initiale",
+                "it": "versione iniziale",
+                "es": "versión inicial",
+                "pl": "początkowa wersja"
+            }
+        },
+        "authors": [
+            "dogafox <dogafox@gmail.com>"
+        ],
+        "title":                    "ekey",
+        "desc":                     {
+            "en": "Receives the finger reads from EKEY Converter UDP",
+            "de": "Empfängt die Finger liest von Ekey Converter UDP",
+            "ru": "Получает считывание пальцев из конвертера EKEY UDP",
+            "pt": "Recebe as leituras do dedo do EKEY Converter UDP",
+            "nl": "Ontvangt de vingeraflezingen van EKEY Converter UDP",
+            "fr": "Reçoit les lectures de doigt de EKEY Converter UDP",
+            "it": "Riceve le letture del dito da EKEY Converter UDP",
+            "es": "Recibe las lecturas de los dedos de EKEY Converter UDP",
+            "pl": "Odbieranie odcisków palców od konwertera EKEY UDP"
+        },
+        "platform":                 "Javascript/Node.js",
+        "mode":                     "daemon",
+        "messagebox":               true,
+        "subscribe":                "messagebox",
+        "materialize":              true,
+        "stopBeforeUpdate":         true,
+        "icon":                     "ekey.png",
+        "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
+        "readme":                   "https://github.com/ioBroker/ioBroker.ekey",
+        "license":                  "MIT",
+        "type":                     "energy",
+        "keywords":                 ["iobroker", "ekey", "finger"],
+        "loglevel":                 "info",
+        "enabled":                  true
+    },
+    "native": {
+        "bind":                     "0.0.0.0",
+        "port":                     56000,
+        "devices": [
+            {
+                "ip": "127.0.0.1",
+                "protocol": "home"
+            }
+        ]
+    },
+    "objects": [],
+    "instanceObjects": []
+}
