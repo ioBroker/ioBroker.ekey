@@ -12,8 +12,28 @@
     <script type="text/javascript" src="../../lib/js/materialize.js"></script>
     <script type="text/javascript" src="../../js/adapter-settings.js"></script>
     <script type="text/javascript" src="words.js"></script>
-    
-<script type="text/javascript">
+
+    <style>
+        .m .select-wrapper+label {
+            top: 100%;
+        }
+        .table-button-add {
+            margin: 5px;
+        }
+        .table-page {
+            height: calc(100% - 110px) !important;
+            overflow: hidden;
+            margin-bottom: 0 !important;
+        }
+        .adapter-container {
+            height: 100%;
+        }
+        .table-values-div {
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+    </style>
+    <script type="text/javascript">
     function readDevices(onChange) {
         $('.table-button-scan').addClass('disabled');
 
@@ -40,7 +60,7 @@
 
                     if (!found) {
                         added++;
-                        devices.push({ip: list.result[j].ip});
+                        devices.push({ip: list.result[j].ip, protocol: 'HOME'});
                     }
                 }
             }
@@ -87,7 +107,7 @@
                 });
             }
         });
-        showHideSettings();
+
         onChange(false);
         values2table('devices', settings.devices, onChange);
     }
@@ -106,14 +126,6 @@
         callback(obj);
     }
 </script>
-    <style>
-        .m .select-wrapper+label {
-            top: 100%;
-        }
-        .table-button-add {
-            margin: 5px;
-        }
-    </style>
 </head>
 <body>
 <div class="m adapter-container">
@@ -122,7 +134,7 @@
             <img src="ekey.png" class="logo">
         </div>
     </div>
-    <div class="row">
+    <div class="row table-page">
         <div class="col s12" id="devices">
             <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
             <a class="btn-floating waves-effect waves-light blue table-button-scan translateT" title="Scan devices"><i class="material-icons">search</i></a>

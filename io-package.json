@@ -56,5 +56,14 @@
         ]
     },
     "objects": [],
-    "instanceObjects": []
+    "instanceObjects": [
+        {
+            "_id":  "devices",
+            "type": "device",
+            "common": {
+                "name": "Devices"
+            },
+            "native": {}
+        }
+    ]
 }
