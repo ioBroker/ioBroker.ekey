@@ -2,7 +2,7 @@
  *
  * ekey adapter bluefox <dogafox@gmail.com>
  *
- * Adapter loading data from an M-Bus devices
+ * Adapter for communication with UDP ekey converter
  *
  */
 /* jshint -W097 */

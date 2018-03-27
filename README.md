@@ -18,6 +18,8 @@ This adapter for ioBroker connects to a ekey connector UDP.
 
 Implemented as described in http://descargas.futurasmus-knxgroup.org/DOC/GB/E-Key/13004/Operating_instructions_ekey_converter_UDP_RS485_ID51.pdf
 
+![image](img/ekey.png)
+
 ## Changelog
 
 ### 0.1.0
