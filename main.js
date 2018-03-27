@@ -70,7 +70,7 @@ function processMessage(obj) {
                     server.setBroadcast(true);
                     setImmediate(() => {
                         server.send(browse, 0, browse.length, 58009, '255.255.255.255');
-                    })
+                    });
                 });
                 server.bind(58009);
 
@@ -153,9 +153,54 @@ function decodeMulti(device, message) {
     }
 }
 function decodeRare(device, message) {
-    const nVersion = message[0];
-    const nCmd = Buffer.readInt32LE(1);
-    const nTerminalID = Buffer.readInt32LE(1);
+    if (message.length < 20) {
+        adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
+        return;
+    }
+
+    let offset = 0;
+    const nVersion = message[0];offset++;
+    if (nVersion !== 3) {
+        adapter.log.warn(`Invalid version length! ${nVersion} != 3`);
+        return;
+    }
+    const state = device.native.ip + '.';
+
+    // 0x88 = decimal 136.. open door with finger
+    // 0x89 = decimal 137.. poor quality or unknown finger
+    const nCmd = message.readInt32LE(offset);offset += 4;
+    if (nCmd !== 0x88 && nCmd !== 0x89) {
+        adapter.log.warn(`Unknown command! 0x${nCmd.toString(16)}`);
+        return;
+    }
+    // Address of finger scanner.
+    const nTerminalID = message.readInt32LE(offset);offset += 4;
+    const strTerminalSerial = message.toString(offset);offset += 14;
+    // 0.. Channel 1 (Relay1)
+    // 1.. Channel 2 (Relay2)
+    // 2.. Channel 3 (Relay3)
+    const nRelayID = message[offset];offset++;
+    if (nRelayID < 0 || nRelayID > 2) {
+        adapter.log.warn(`Unknown nRelayID! ${nRelayID}`);
+        return;
+    }
+
+    const nUserID       = message.readInt32LE(offset);offset += 4;
+    const nFinger       = message.readInt32LE(offset);offset += 4;
+    const strEvent      = message.toString(offset);   offset += 16;
+    const sTime         = message.toString(offset);   offset += 16;
+    const strName       = message.readInt16LE(offset);offset += 2;
+    const strPersonalID = message.readInt16LE(offset);offset += 2;
+
+    const ts = new Date(sTime).getTime();
+
+    adapter.setState(state + 'finger', {ack: true, ts: ts, val: nFinger});
+    adapter.setState(state + 'user',   {ack: true, ts: ts, val: nUserID});
+    adapter.setState(state + 'serial', {ack: true, ts: ts, val: strTerminalSerial});
+    adapter.setState(state + 'action', {ack: true, ts: ts, val: nCmd === 0x88 ? 'OPEN' : 'REJECT'});
+    adapter.setState(state + 'relay',  {ack: true, ts: ts, val: nRelayID});
+    //nTerminalID
+    adapter.log.debug(`Received info ${nCmd === 0x88 ? 'OPEN' : 'REJECT'}, finger: ${nFinger}, user: ${nUserID}, serial: ${serial}, relay: ${relay}, strEvent: ${strEvent}, strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
 }
 
 function tasksDeleteDevice(tasks, ip) {

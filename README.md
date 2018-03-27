@@ -14,12 +14,14 @@ Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/ioBroke
 
 [![NPM](https://nodei.co/npm/iobroker.ekey.png?downloads=true)](https://nodei.co/npm/iobroker.ekey/)
 
-This adapter for ioBroker connects to a ekey connectior UDP.
+This adapter for ioBroker connects to a ekey connector UDP.
+
+Implemented as described in http://descargas.futurasmus-knxgroup.org/DOC/GB/E-Key/13004/Operating_instructions_ekey_converter_UDP_RS485_ID51.pdf
 
 ## Changelog
 
 ### 0.1.0
-* initial release for testing
+* (bluefox) initial release
 
 ## License
 
