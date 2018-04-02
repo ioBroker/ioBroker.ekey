@@ -15,13 +15,20 @@ function EkeyDevice(options) {
         '1_0003_-----JOSEF_1_7_2_80156809150025_–GAR_3_-'  // Multi reject
     ];
 
-
     this.close = (callback) => {
         if (server) {
             server.close(callback);
             server = null;
         } else {
             if (typeof callback === 'function') callback();
+        }
+    };
+
+    this.send = data => {
+        if (Buffer.from) {
+            server.send(Buffer.from(data, 'ascii'), 0, data.length, 56000, '255.255.255.255');
+        } else {
+            server.send(new Buffer(data, 'ascii'), 0, data.length, 56000, '255.255.255.255');
         }
     };
 
@@ -48,7 +55,11 @@ function EkeyDevice(options) {
         });
 
         setInterval(() => {
-            server.send(answer2, 0, informs[command].length, 56000, '255.255.255.255');
+            if (Buffer.from) {
+                server.send(Buffer.from(informs[command], 'ascii'), 0, informs[command].length, 56000, '255.255.255.255');
+            } else {
+                server.send(new Buffer(informs[command], 'ascii'), 0, informs[command].length, 56000, '255.255.255.255');
+            }
             command++;
             if (command >= informs.length) command = 0;
         }, 10000);
