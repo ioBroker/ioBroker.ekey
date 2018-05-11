@@ -520,7 +520,7 @@ function startServer() {
     });
     mServer.on('listening', () => {
         const address = mServer.address();
-        console.log(`adapter listening ${address.address}:${address.port}`);
+        adapter.log.info(`adapter listening ${address.address}:${address.port}`);
     });
 
     mServer.on('message', (message, rinfo) => {
@@ -539,6 +539,8 @@ function startServer() {
                 adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
                 adapter.log.warn(`unknown communication type for ${rinfo.address}: ${devices[rinfo.address]}`);
             }
+        } else {
+            adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
         }
     });
 

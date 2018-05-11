@@ -23,7 +23,7 @@ or here https://www.ekey.net/assets/media_center/EN/User_Guide_ekey_net_4.3_en_w
 
 ## Changelog
 
-### 0.2.0
+### 0.2.1
 * (bluefox) tests were added
 
 ### 0.1.0
