@@ -1,19 +1,18 @@
 /* jshint -W097 */// jshint strict:false
 /*jslint node: true */
 /*jshint expr: true*/
-var expect = require('chai').expect;
-var setup  = require(__dirname + '/lib/setup');
-var net = require('net');
+const expect = require('chai').expect;
+const setup  = require(__dirname + '/lib/setup');
+const dgram = require('dgram');
 
-var objects = null;
-var states  = null;
-var onStateChanged = null;
-var onObjectChanged = null;
-var sendToID = 1;
 
-var adapterShortName = setup.adapterName.substring(setup.adapterName.indexOf('.')+1);
+let objects = null;
+let states  = null;
+let onStateChanged = null;
 
-var lastMessage;
+let adapterShortName = setup.adapterName.substring(setup.adapterName.indexOf('.') + 1);
+
+let sendMessage = null;
 
 function checkConnectionOfAdapter(cb, counter) {
     counter = counter || 0;
@@ -57,120 +56,36 @@ function checkValueOfState(id, value, cb, counter) {
     });
 }
 
-function sendTo(target, command, message, callback) {
-    onStateChanged = function (id, state) {
-        if (id === 'messagebox.system.adapter.test.0') {
-            callback(state.message);
-        }
-    };
+function onReceive(msg, info) {
 
-    states.pushMessage('system.adapter.' + target, {
-        command:    command,
-        message:    message,
-        from:       'system.adapter.test.0',
-        callback: {
-            message: message,
-            id:      sendToID++,
-            ack:     false,
-            time:    (new Date()).getTime()
-        }
-    });
 }
 
-function setupTcpServer(callback) {
-    var port = 15000;
+function setupUdpServer(onReceive, onReady) {
 
-    function sendMessage(socket, message, callback) {
-        console.log(new Date().toString() + ':     ekey-TCP-Device: Send to Master: ' + message.toString('hex'));
-        socket.write(message, function(err) {
-            console.log(new Date().toString() + ':         ekey-TCP-Device: Send done');
-            callback && callback(err);
-        });
+    const server = dgram.createSocket('udp4');
+
+    function sendMessage(message, port, address) {
+        console.log(`Send "${message}" to ${address}:${port}`);
+        server.send(message, port, address);
     }
 
-    var testSocket;
-    var server = net.createServer(function(socket) {
-        console.log(new Date().toString() + ': ekey-TCP-Device: Connected ' + port + '!');
-
-        testSocket = socket;
-        socket.setNoDelay();
-
-        socket.on('data', function (data) {
-            var sendBuf;
-            var counterFD;
-
-            if (!testSocket) {
-                console.log(new Date().toString() + ': ekey-TCP-Device: Connection was already closed');
-                return;
-            }
-            if (!data) {
-                console.log(new Date().toString() + ': ekey-TCP-Device: Received empty string!');
-                return;
-            }
-            var hexData = data.toString('hex');
-            console.log(new Date().toString() + ': ekey-TCP-Device: Received from Master: ' + hexData);
-
-            if (hexData.substring(0,4) === '1040') {
-                var device = hexData.substring(4,6);
-                console.log(new Date().toString() + ':     ekey-Serial-Device: Initialization Request ' + device);
-                if (device === "fe" || device === "01" || device === "05") {
-                    sendBuf = Buffer.from('E5', 'hex');
-                    sendMessage(socket, sendBuf);
-                }
-                else if (device === "fd") {
-                    if (counterFD%2 === 0) {
-                        sendBuf = Buffer.from('E5', 'hex');
-                        sendMessage(socket, sendBuf);
-                    }
-                    counterFD++;
-                }
-            }
-            else if (hexData.substring(0,6) === '105b01') {
-                console.log(new Date().toString() + ':     ekey-TCP-Device: Request for Class 2 Data ID 1');
-                sendBuf = Buffer.from('683C3C680808727803491177040E16290000000C7878034911041331D40000426C0000441300000000046D1D0D98110227000009FD0E0209FD0F060F00008F13E816', 'hex');
-                sendMessage(socket, sendBuf);
-            }
-            else if (hexData.substring(0,6) === '105b02') {
-                console.log(new Date().toString() + ':     ekey-TCP-Device: Request for Class 2 Data ID 2');
-                sendBuf = Buffer.from('689292680801723E020005434C1202130000008C1004521200008C1104521200008C2004334477018C21043344770102FDC9FF01ED0002FDDBFF01200002ACFF014F008240ACFF01EEFF02FDC9FF02E70002FDDBFF02230002ACFF0251008240ACFF02F1FF02FDC9FF03E40002FDDBFF03450002ACFF03A0008240ACFF03E0FF02FF68000002ACFF0040018240ACFF00BFFF01FF1304D916', 'hex');
-                sendMessage(socket, sendBuf);
-            }
-            else if (hexData.substring(0, 23) === '680b0b6873fd52ffffff1ff') {
-                console.log(new Date().toString() + ':     ekey-Serial-Device: Secondary Scan found');
-                sendBuf = Buffer.from('E5', 'hex');
-                sendMessage(socket, sendBuf);
-            }
-            else if (hexData.substring(0, 6) === '105bfd') {
-                console.log(new Date().toString() + ':     ekey-Serial-Device: Request for Class 2 Data ID FD');
-                sendBuf = Buffer.from('6815156808017220438317b40901072b0000000c13180000009f16', 'hex');
-                sendMessage(socket, sendBuf);
-            }
-            lastMessage = hexData;
-        });
-        socket.on('error', function (err) {
-            console.error(new Date().toString() + ': ekey-TCP-Device: Error: ' + err);
-        });
-        socket.on('close', function () {
-            console.error(new Date().toString() + ': ekey-TCP-Device: Close');
-        });
-        socket.on('end', function () {
-            console.error(new Date().toString() + ': ekey-TCP-Device: End');
-        });
-
-        setTimeout(function() {
-            server.close();
-            testSocket.end();
-            testSocket = null;
-            console.error('Destroy TCP-Socket!!');
-        }, 60000);
+    server.on('error', err => {
+        console.log(`server error:\n${err.stack}`);
+        server.close();
     });
 
-    server.on('listening', function() {
-        console.log('ekey-TCP-Device: Listening');
-        callback();
+    server.on('message', (msg, rinfo) => {
+        console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+        onReceive && onReceive(msg, rinfo);
     });
 
-    server.listen(port, '127.0.0.1');
+    server.on('listening', () => {
+        const address = server.address();
+        console.log(`server listening ${address.address}:${address.port}`);
+        onReady && onReady(sendMessage);
+    });
+
+    server.bind(56000, '127.0.0.1');
 }
 
 describe('Test ' + adapterShortName + ' adapter', function() {
@@ -178,7 +93,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(600000); // because of first install from npm
 
         setup.setupController(function () {
-            var config = setup.getAdapterConfig();
+            let config = setup.getAdapterConfig();
             // enable adapter
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
@@ -188,20 +103,19 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             config.native.defaultUpdateInterval   = 20;
             config.native.devices = [
                 {
-                    "id": "1",
-                    "updateInterval": 60
-                },
-                {
-                    "id": "2"
+                    ip: '127.0.0.1',
+                    protocol: 'HOME'
                 }
             ];
             setup.setAdapterConfig(config.common, config.native);
 
-            setupTcpServer(function() {
-                setup.startController(true, function(id, obj) {}, function (id, state) {
+            setupUdpServer(onReceive, _sendMessage => {
+                sendMessage = _sendMessage;
+
+                setup.startController(true, (id, obj) => {}, (id, state) => {
                         if (onStateChanged) onStateChanged(id, state);
                     },
-                    function (_objects, _states) {
+                    (_objects, _states) => {
                         objects = _objects;
                         states  = _states;
                         _done();
@@ -210,9 +124,10 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         });
     });
 
-    it('Test ' + adapterShortName + ' adapter: Check if adapter started', function (done) {
+    it('Test ' + adapterShortName + ' adapter: Check if adapter started', done => {
         this.timeout(60000);
-        checkConnectionOfAdapter(function (res) {
+
+        checkConnectionOfAdapter(res => {
             if (res) console.log(res);
             expect(res).not.to.be.equal('Cannot check connection');
             objects.setObject('system.adapter.test.0', {
@@ -228,82 +143,55 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         });
     });
 
-    it('Test ' + adapterShortName + ' adapter: delay', function (done) {
-        this.timeout(120000);
-
-        setTimeout(function() {
-            done();
-        }, 110000);
-    });
-
-/*
-    // We expect ERROR as last Notify necause no nut is running there
-    it('Test ' + adapterShortName + ' adapter: test initial state as ERROR', function (done) {
-        this.timeout(25000);
-
-        setTimeout(function() {
-            states.getState('nut.0.status.last_notify', function (err, state) {
-                if (err) console.error(err);
-                expect(state).to.exist;
-                if (!state) {
-                    console.error('state "status.last_notify" not set');
-                }
-                else {
-                    console.log('check status.last_notify ... ' + state.val);
-                    expect(state.val).to.exist;
-                    expect(state.val).to.be.equal('ERROR');
-                }
-                states.getState('nut.0.status.severity', function (err, state) {
-                    if (err) console.error(err);
-                    expect(state).to.exist;
-                    if (!state) {
-                        console.error('state "status.severity" not set');
-                    }
-                    else {
-                        console.log('check status.severity ... ' + state.val);
-                    }
-                    expect(state.val).to.exist;
-                    expect(state.val).to.be.equal(4);
-                    done();
-                });
+    it('Test ' + adapterShortName + ' adapter: test HOME protocol', done => {
+        this.timeout(1000);
+        expect(sendMessage).to.be.ok;
+        sendMessage(Buffer.from('1_0005_1_801845670767_1_1', 'ascii'), 15000, '127.0.0.1');
+        checkValueOfState('ekey.0.devices.127_0_0_1.user', '0005', () => {
+            checkValueOfState('ekey.0.devices.127_0_0_1.relay', '1', () => {
+                done();
             });
-        }, 10000);
+        });
     });
-
-    it('Test ' + adapterShortName + ' adapter: send notify Message and receive answer', function (done) {
-        this.timeout(25000);
-        var now = new Date().getTime();
-
-        console.log('send notify with "COMMBAD" to adapter ...');
-        sendTo('nut.0', 'notify', {notifytype: 'COMMBAD', upsname: 'nutName@127.0.0.1'});
-        setTimeout(function() {
-            states.getState('nut.0.status.last_notify', function (err, state) {
-                if (err) console.error(err);
-                expect(state).to.exist;
-                if (!state) {
-                    console.error('state "status.last_notify" not set');
-                }
-                else {
-                    console.log('check status.last_notify ... ' + state.val);
-                }
-                expect(state.val).to.be.equal('COMMBAD');
-                states.getState('nut.0.status.severity', function (err, state) {
-                    if (err) console.error(err);
-                    expect(state).to.exist;
-                    if (!state) {
-                        console.error('state "status.severity" not set');
-                    }
-                    else {
-                        console.log('check status.severity ... ' + state.val);
-                    }
-                    expect(state.val).to.exist;
-                    expect(state.val).to.be.equal(4);
-                    done();
-                });
+    
+    /*it('Test ' + adapterShortName + ' adapter: test Multi protocol', done => {
+        this.timeout(1000);
+        expect(sendMessage).to.be.ok;
+        sendMessage(Buffer.from('1 0003 -----JOSEF 1 7 2 80131004120001 -GAR 1 -', 'ascii'), 15000, '127.0.0.1');
+        checkValueOfState('ekey.0.devices.127_0_0_1.user', '0003', () => {
+            checkValueOfState('ekey.0.devices.127_0_0_1.fs_name', '-GAR', () => {
+                done();
             });
-        }, 2000);
-    });
-*/
+        });
+    });*/
+
+    /*it('Test ' + adapterShortName + ' adapter: test RARE protocol', done => {
+        this.timeout(1000);
+        expect(sendMessage).to.be.ok;
+        sendMessage(Buffer.from([
+            0, 0, 0, 3, // version
+            0, 0, 0, 0x88, // open door with finger
+            0, 0, 0, 0x10, // terminal ID
+            // "0123456789:;<="
+            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, // serial (14 bytes
+            1, // relay
+            0, // reserved
+            0, 0, 0, 67, // user id
+            0, 0, 0, 5, // finger
+            // "              01"
+            0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x30, 0x31, // event
+            //"2018-05-05 00:00"
+            0x32, 0x30, 0x31, 0x38, 0x2d, 0x30, 0x35, 0x2d, 0x30, 0x35, 0x20, 0x30, 0x30, 0x3A, 0x30, 0x30, // time
+            0, 5, // strName
+            0, 6 // persional ID
+        ]), 15000, '127.0.0.1');
+        checkValueOfState('ekey.0.devices.127_0_0_1.user', 67, () => {
+            checkValueOfState('ekey.0.devices.127_0_0_1.relay', 1, () => {
+                done();
+            });
+        });
+    });*/
+
     after('Test ' + adapterShortName + ' adapter: Stop js-controller', function (done) {
         this.timeout(10000);
 

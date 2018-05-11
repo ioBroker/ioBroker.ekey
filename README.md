@@ -17,10 +17,14 @@ Windows: [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/ioBroke
 This adapter for ioBroker connects to a ekey connector UDP.
 
 Implemented as described in http://descargas.futurasmus-knxgroup.org/DOC/GB/E-Key/13004/Operating_instructions_ekey_converter_UDP_RS485_ID51.pdf
+or here https://www.ekey.net/assets/media_center/EN/User_Guide_ekey_net_4.3_en_web_ID181.pdf
 
 ![image](img/ekey.png)
 
 ## Changelog
+
+### 0.2.0
+* (bluefox) tests were added
 
 ### 0.1.0
 * (bluefox) initial release

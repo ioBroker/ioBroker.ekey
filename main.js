@@ -60,7 +60,9 @@ function processMessage(obj) {
 
                 server.on('message', (message, rinfo) => {
                     if (message.toString('base64') !== browse.toString('base64')) {
-                        devices.push({ip: rinfo.address});
+                        if (!devices.find(dev => dev.ip === rinfo.address)) {
+                            devices.push({ip: rinfo.address});
+                        }
                     }
                 });
                 server.on('error', error => {
@@ -84,8 +86,8 @@ function processMessage(obj) {
     }
 }
 
-function decodeHome(device, message) {
-    const values = message.toString('ascii').split(/[_?]/);
+function decodeHome(ip, message) {
+    const values = message.toString('ascii').split(/[\s_?]/);
     if (values.length < 6) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
     } else
@@ -95,7 +97,7 @@ function decodeHome(device, message) {
         if (values[4] === '1') values[4] = 'OPEN';
         if (values[4] === '2') values[4] = 'REJECT';
         adapter.log.debug(`USER ID: ${values[1]}, Finger ID: ${values[2]}, Serial ID: ${values[3]}, Action: ${values[4]}, Relais: ${values[5]}`);
-        const state = device.native.ip + '.';
+        const state = 'devices.' + ip.replace(/\./g, '_') + '.';
         adapter.setState(state + 'user',   values[1], true);
         adapter.setState(state + 'finger', values[2], true);
         adapter.setState(state + 'serial', values[3], true);
@@ -104,8 +106,8 @@ function decodeHome(device, message) {
     }
 }
 
-function decodeMulti(device, message) {
-    const values = message.toString('ascii').split(/[_?]/);
+function decodeMulti(ip, message) {
+    const values = message.toString('ascii').split(/[\s_?]/);
     if (values.length < 6) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
     } else
@@ -115,7 +117,7 @@ function decodeMulti(device, message) {
         if (values[4] === '1') values[8] = 'OPEN';
         if (values[4] === '2') values[8] = 'REJECT';
         adapter.log.debug(`USER ID: ${values[1]}, Finger ID: ${values[4]}, Serial ID: ${values[6]}, Action: ${values[8]}, Input: ${values[9]}`);
-        const state = device.native.ip + '.';
+        const state = 'devices.' + ip.replace(/\./g, '_') + '.';
         adapter.setState(state + 'user',        values[1], true);
         adapter.setState(state + 'user_name',   values[2], true);
 
@@ -152,45 +154,47 @@ function decodeMulti(device, message) {
         adapter.setState(state + 'input',       values[9], true);
     }
 }
-function decodeRare(device, message) {
+
+function decodeRare(ip, message) {
     if (message.length < 20) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
         return;
     }
 
     let offset = 0;
-    const nVersion = message[0];offset++;
+    const nVersion = message.readInt32BE(offset);offset+=4;
     if (nVersion !== 3) {
         adapter.log.warn(`Invalid version length! ${nVersion} != 3`);
         return;
     }
-    const state = device.native.ip + '.';
+    const state = 'devices.' + ip.replace(/\./g, '_') + '.';
 
     // 0x88 = decimal 136.. open door with finger
     // 0x89 = decimal 137.. poor quality or unknown finger
-    const nCmd = message.readInt32LE(offset);offset += 4;
+    const nCmd = message.readInt32BE(offset);offset += 4;
     if (nCmd !== 0x88 && nCmd !== 0x89) {
         adapter.log.warn(`Unknown command! 0x${nCmd.toString(16)}`);
         return;
     }
     // Address of finger scanner.
-    const nTerminalID = message.readInt32LE(offset);offset += 4;
-    const strTerminalSerial = message.toString(offset);offset += 14;
+    const nTerminalID = message.readInt32BE(offset);offset += 4;
+    const strTerminalSerial = message.toString('ascii', offset, offset + 14);offset += 14;
     // 0.. Channel 1 (Relay1)
     // 1.. Channel 2 (Relay2)
     // 2.. Channel 3 (Relay3)
     const nRelayID = message[offset];offset++;
-    if (nRelayID < 0 || nRelayID > 2) {
+    if (nRelayID < 0 || nRelayID > 4) {
         adapter.log.warn(`Unknown nRelayID! ${nRelayID}`);
         return;
     }
 
-    const nUserID       = message.readInt32LE(offset);offset += 4;
-    const nFinger       = message.readInt32LE(offset);offset += 4;
-    const strEvent      = message.toString(offset);   offset += 16;
-    const sTime         = message.toString(offset);   offset += 16;
-    const strName       = message.readInt16LE(offset);offset += 2;
-    const strPersonalID = message.readInt16LE(offset);offset += 2;
+    offset++; // reserved
+    const nUserID       = message.readInt32BE(offset);offset += 4;
+    const nFinger       = message.readInt32BE(offset);offset += 4;
+    const strEvent      = message.toString('ascii', offset, offset + 16);   offset += 16;
+    const sTime         = message.toString('ascii', offset, offset + 16);   offset += 16;
+    const strName       = message.readInt16BE(offset);offset += 2;
+    const strPersonalID = message.readInt16BE(offset);offset += 2;
 
     const ts = new Date(sTime).getTime();
 
@@ -200,7 +204,7 @@ function decodeRare(device, message) {
     adapter.setState(state + 'action', {ack: true, ts: ts, val: nCmd === 0x88 ? 'OPEN' : 'REJECT'});
     adapter.setState(state + 'relay',  {ack: true, ts: ts, val: nRelayID});
     //nTerminalID
-    adapter.log.debug(`Received info ${nCmd === 0x88 ? 'OPEN' : 'REJECT'}, finger: ${nFinger}, user: ${nUserID}, serial: ${serial}, relay: ${relay}, strEvent: ${strEvent}, strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
+    adapter.log.debug(`Received info ${nCmd === 0x88 ? 'OPEN' : 'REJECT'}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
 }
 
 function tasksDeleteDevice(tasks, ip) {
@@ -509,18 +513,31 @@ function syncConfig(callback) {
 function startServer() {
     mServer = dgram.createSocket('udp4');
 
-    mServer.on('message', function (message, rinfo) {
-        adapter.log.debug(rinfo.address + ':' + rinfo.port +' - ' + message.toString('ascii'));
-        if (devices[rinfo.address]) {
+    mServer.on('error', err => {
+        adapter.log.error(`Cannot open socket:\n${err.stack}`);
+        mServer.close();
+        process.exit(20);
+    });
+    mServer.on('listening', () => {
+        const address = mServer.address();
+        console.log(`adapter listening ${address.address}:${address.port}`);
+    });
 
-            if (devices[rinfo.address].native.type === 'HOME') {
-                decodeHome(devices[rinfo.address], message);
-            } else if (devices[rinfo.address].native.type === 'MULTI') {
-                decodeMulti(devices[rinfo.address], message);
-            } else if (devices[rinfo.address].native.type === 'RARE') {
-                decodeRare(devices[rinfo.address], message);
+    mServer.on('message', (message, rinfo) => {
+        if (devices[rinfo.address]) {
+            if (devices[rinfo.address] === 'HOME') {
+                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
+                decodeHome(rinfo.address, message);
+            } else if (devices[rinfo.address] === 'MULTI') {
+                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
+                decodeMulti(rinfo.address, message);
+            } else if (devices[rinfo.address] === 'RARE') {
+                // do not output rare
+                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.length + ' bytes');
+                decodeRare(rinfo.address, message);
             } else {
-                adapter.log.warn(`unknown communication type for ${rinfo.address}: ${devices[rinfo.address].native.type}`);
+                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
+                adapter.log.warn(`unknown communication type for ${rinfo.address}: ${devices[rinfo.address]}`);
             }
         }
     });

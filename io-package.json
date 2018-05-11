@@ -1,8 +1,19 @@
 {
     "common": {
         "name":                     "ekey",
-        "version":                  "0.1.0",
+        "version":                  "0.2.0",
 		"news": {
+            "0.2.0": {
+                "en": "tests were added",
+                "de": "Tests wurden hinzugefügt",
+                "ru": "тесты были добавлены",
+                "pt": "testes foram adicionados",
+                "nl": "tests werden toegevoegd",
+                "fr": "des tests ont été ajoutés",
+                "it": "test sono stati aggiunti",
+                "es": "se agregaron pruebas",
+                "pl": "testy zostały dodane"
+            },
             "0.1.0": {
                 "en": "initial version",
                 "de": "erste Version",
@@ -51,7 +62,7 @@
         "devices": [
             {
                 "ip": "127.0.0.1",
-                "protocol": "home"
+                "protocol": "HOME"
             }
         ]
     },
