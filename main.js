@@ -482,7 +482,7 @@ function syncConfig(callback) {
                     if (channels[j].native.protocol !== devices[ip]) {
                         channels[j].native.protocol = devices[ip];
                         tasks.push({type: 'update', obj: channels[j]});
-                        tasksAddDevice(tasks, channels[j].ip, channels[j].protocol);
+                        tasksAddDevice(tasks, channels[j].native.ip, channels[j].protocol);
                     }
                 } else {
                     configToDelete.push(ip);
