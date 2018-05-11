@@ -67,7 +67,7 @@ function setupUdpServer(onReceive, onReady) {
 
     function sendMessage(message, port, address) {
         console.log(`Send "${message}" to ${address}:${port}`);
-        server.send(message, port, address);
+        server.send(message, 0, message.length, port, address);
     }
 
     server.on('error', err => {
