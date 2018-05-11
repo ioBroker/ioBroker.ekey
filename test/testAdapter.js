@@ -1,9 +1,10 @@
 /* jshint -W097 */// jshint strict:false
 /*jslint node: true */
 /*jshint expr: true*/
+'use strict';
 const expect = require('chai').expect;
 const setup  = require(__dirname + '/lib/setup');
-const dgram = require('dgram');
+const dgram  = require('dgram');
 
 
 let objects = null;
@@ -153,7 +154,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             });
         });
     });
-    
+
     /*it('Test ' + adapterShortName + ' adapter: test Multi protocol', done => {
         this.timeout(1000);
         expect(sendMessage).to.be.ok;
