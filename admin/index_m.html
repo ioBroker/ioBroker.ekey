@@ -36,9 +36,11 @@
     <script type="text/javascript">
     function readDevices(onChange) {
         $('.table-button-scan').addClass('disabled');
+        $('.table-button-add').addClass('disabled');
 
         sendTo(null, 'browse', null, function (list) {
             $('.table-button-scan').removeClass('disabled');
+            $('.table-button-add').removeClass('disabled');
             $('.progress-bar').hide();
 
             if (list.error) {
