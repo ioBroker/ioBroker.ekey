@@ -51,7 +51,7 @@
         "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
         "readme":                   "https://github.com/ioBroker/ioBroker.ekey",
         "license":                  "MIT",
-        "type":                     "energy",
+        "type":                     "hardware",
         "keywords":                 ["iobroker", "ekey", "finger"],
         "loglevel":                 "info",
         "enabled":                  true
