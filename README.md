@@ -23,6 +23,9 @@ or here https://www.ekey.net/assets/media_center/EN/User_Guide_ekey_net_4.3_en_w
 
 ## Changelog
 
+### 1.0.0
+* (bluefox) Configuration dialog under firefox was corrected
+
 ### 0.2.1
 * (bluefox) tests were added
 

@@ -1,8 +1,19 @@
 {
     "common": {
         "name":                     "ekey",
-        "version":                  "0.2.1",
+        "version":                  "1.0.0",
 		"news": {
+            "1.0.0": {
+                "en": "Configuration dialog under firefox was corrected",
+                "de": "Konfigurationsdialog unter Firefox wurde korrigiert",
+                "ru": "Исправлено диалоговое окно конфигурации под firefox",
+                "pt": "O diálogo de configuração sob o firefox foi corrigido",
+                "nl": "Configuratie dialoog onder firefox werd gecorrigeerd",
+                "fr": "Le dialogue de configuration sous firefox a été corrigé",
+                "it": "La finestra di dialogo di configurazione sotto firefox è stata corretta",
+                "es": "Se corrigió el diálogo de configuración en Firefox",
+                "pl": "Okno dialogowe konfiguracji w firefox zostało poprawione"
+            },
             "0.2.1": {
                 "en": "tests were added",
                 "de": "Tests wurden hinzugefügt",
