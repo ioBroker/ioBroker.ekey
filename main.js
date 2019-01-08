@@ -87,7 +87,7 @@ function processMessage(obj) {
 }
 
 function decodeHome(ip, message) {
-    const values = message.toString('ascii').split(/[\s_?]/);
+    const values = message.toString('ascii').split(/[;_?]/);
     if (values.length < 6) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
     } else
@@ -107,7 +107,7 @@ function decodeHome(ip, message) {
 }
 
 function decodeMulti(ip, message) {
-    const values = message.toString('ascii').split(/[\s_?]/);
+    const values = message.toString('ascii').split(/[;_?]/);
     if (values.length < 6) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
     } else
