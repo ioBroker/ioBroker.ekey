@@ -12,7 +12,7 @@
 
 'use strict';
 
-const utils   = require('./lib/utils'); // Get common adapter utils
+const utils = require('@iobroker/adapter-core'); // Get common adapter utils
 const adapter = new utils.Adapter('ekey');
 const dgram   = require('dgram');
 let   devices = {};
