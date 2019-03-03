@@ -18,8 +18,9 @@
   "dependencies": {},
   "devDependencies": {
     "gulp": "^3.9.1",
-    "mocha": "^5.0.0",
-    "chai": "^4.2.0"
+    "mocha": "^6.0.2",
+    "chai": "^4.2.0",
+    "@iobroker/adapter-core": "^1.0.3"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.ekey/issues"
