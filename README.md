@@ -4,7 +4,7 @@
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/ioBroker/ioBroker.ekey.svg)](https://greenkeeper.io/)
 
-[![NPM version](http://img.shields.io/npm/v/iobroker.ekey.svg)](https://www.npmjs.com/package/iobroker.ekey)
+![Number of Installations](http://iobroker.live/badges/ekey-installed.svg) ![Number of Installations](http://iobroker.live/badges/ekey-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.ekey.svg)](https://www.npmjs.com/package/iobroker.ekey)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.ekey.svg)](https://www.npmjs.com/package/iobroker.ekey)
 [![Dependency Status](https://gemnasium.com/badges/github.com/ioBroker/ioBroker.ekey.svg)](https://gemnasium.com/github.com/ioBroker/ioBroker.ekey)
 [![Code Climate](https://codeclimate.com/github/ioBroker/ioBroker.ekey/badges/gpa.svg)](https://codeclimate.com/github/ioBroker/ioBroker.ekey)
