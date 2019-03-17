@@ -60,7 +60,7 @@
         "stopBeforeUpdate":         true,
         "icon":                     "ekey.png",
         "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
-        "readme":                   "https://github.com/ioBroker/ioBroker.ekey",
+        "readme":                   "https://github.com/ioBroker/ioBroker.ekey/blob/master/README.md",
         "license":                  "MIT",
         "type":                     "hardware",
         "keywords":                 ["iobroker", "ekey", "finger"],
