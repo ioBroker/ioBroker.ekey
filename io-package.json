@@ -1,8 +1,20 @@
 {
     "common": {
         "name":                     "ekey",
-        "version":                  "1.0.0",
+        "version":                  "1.1.0",
 		"news": {
+            "1.1.0": {
+                "en": "Added compact mode\nOwn port is now configurable",
+                "de": "Kompaktmodus hinzugefügt\nDer eigene Port ist jetzt konfigurierbar",
+                "ru": "Добавлен компактный режим\nСобственный порт теперь настраивается",
+                "pt": "Adicionado modo compacto\nPorta própria agora configurável",
+                "nl": "Compacte modus toegevoegd\nEigen poort kan nu worden geconfigureerd",
+                "fr": "Ajout du mode compact\nPropre port est maintenant configurable",
+                "it": "Aggiunta modalità compatta\nLa propria porta è ora configurabile",
+                "es": "Modo compacto agregado\nEl puerto propio ahora es configurable",
+                "pl": "Dodano tryb kompaktowy\nWłasny port można teraz konfigurować",
+                "zh-cn": "增加了紧凑模式\n现在可以配置自己的端口"
+            },
             "1.0.0": {
                 "en": "Configuration dialog under firefox was corrected",
                 "de": "Konfigurationsdialog unter Firefox wurde korrigiert",
@@ -60,6 +72,7 @@
         "stopBeforeUpdate":         true,
         "icon":                     "ekey.png",
         "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
+        "compact":                  true,
         "readme":                   "https://github.com/ioBroker/ioBroker.ekey/blob/master/README.md",
         "license":                  "MIT",
         "type":                     "hardware",

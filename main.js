@@ -17,10 +17,27 @@ const adapter = new utils.Adapter('ekey');
 const dgram   = require('dgram');
 let   devices = {};
 let   mServer = null;
+/**
+ * The adapter instance
+ * @type {ioBroker.Adapter}
+ */
+let adapter;
 
-adapter.on('ready', main);
+/**
+ * Starts the adapter instance
+ * @param {Partial<ioBroker.AdapterOptions>} [options]
+ */
+function startAdapter(options) {
+    adapter = utils.adapter(Object.assign({}, options, {name: 'ekey'}));
 
-adapter.on('message', processMessage);
+    adapter.on('unload', callback => onClose(callback));
+
+    adapter.on('ready', main);
+
+    adapter.on('message', processMessage);
+
+    return adapter;
+}
 
 function onClose(callback) {
     if (mServer) {
@@ -33,23 +50,17 @@ function onClose(callback) {
     }
 }
 
-adapter.on('unload', function (callback) {
-    onClose(callback);
-});
+process.on('SIGINT', () => onClose());
 
-process.on('SIGINT', function () {
-    onClose();
-});
-
-process.on('uncaughtException', function (err) {
-    if (adapter && adapter.log) {
-        adapter.log.warn('Exception: ' + err);
-    }
+process.on('uncaughtException', err => {
+    adapter && adapter.log && adapter.log.warn('Exception: ' + err);
     onClose();
 });
 
 function processMessage(obj) {
-    if (!obj) return;
+    if (!obj) {
+        return;
+    }
 
     if (obj) {
         switch (obj.command) {
@@ -70,9 +81,7 @@ function processMessage(obj) {
                 });
                 server.on('listening', () => {
                     server.setBroadcast(true);
-                    setImmediate(() => {
-                        server.send(browse, 0, browse.length, 58009, '255.255.255.255');
-                    });
+                    setImmediate(() => server.send(browse, 0, browse.length, 58009, '255.255.255.255'));
                 });
                 server.bind(58009);
 
@@ -456,7 +465,7 @@ function processTasks(tasks, callback) {
 }
 
 function syncConfig(callback) {
-    adapter.getChannelsOf('devices', function (err, channels) {
+    adapter.getChannelsOf('devices', (err, channels) => {
         let configToDelete = [];
         let configToAdd    = [];
         let k;
@@ -518,6 +527,7 @@ function startServer() {
         mServer.close();
         process.exit(20);
     });
+
     mServer.on('listening', () => {
         const address = mServer.address();
         adapter.log.info(`adapter listening ${address.address}:${address.port}`);
@@ -553,3 +563,10 @@ function main() {
     syncConfig(startServer);
 }
 
+if (module.parent) {
+    // Export startAdapter in compact mode
+    module.exports = startAdapter;
+} else {
+    // otherwise start the instance directly
+    startAdapter();
+}

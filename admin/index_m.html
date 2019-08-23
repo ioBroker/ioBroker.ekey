@@ -21,7 +21,7 @@
             margin: 5px;
         }
         .table-page {
-            height: calc(100% - 110px) !important;
+            height: calc(100% - 90px) !important;
             overflow: hidden;
             margin-bottom: 0 !important;
         }
@@ -37,6 +37,7 @@
         }
     </style>
     <script type="text/javascript">
+
     function readDevices(onChange) {
         $('.table-button-scan').addClass('disabled');
         $('.table-button-add').addClass('disabled');
@@ -85,19 +86,19 @@
     }
 
     function load(settings, onChange) {
-        if (!settings.type) settings.type = 'tcp';
+        settings.type = settings.type || 'tcp';
 
         $('.value').each(function () {
             var key = $(this).attr('id');
             var $key = $('#' + key + '.value');
             if ($key.attr('type') === 'checkbox') {
-                $key.prop('checked', settings[key]).on('change', function() {
+                $key.prop('checked', settings[key]).on('change', function () {
                     onChange();
                 });
             } else {
-                $key.val(settings[key]).on('change', function() {
+                $key.val(settings[key]).on('change', function () {
                     onChange();
-                }).on('keyup', function() {
+                }).on('keyup', function () {
                     onChange();
                 });
             }
@@ -135,24 +136,40 @@
 <body>
 <div class="m adapter-container">
     <div class="row">
-        <div class="col s12 m4 l2">
-            <img src="ekey.png" class="logo">
+        <div class="col s12">
+            <ul class="tabs">
+                <li class="tab col s3"><a href="#tab-main"     class="translate active">Devices</a></li>
+                <li class="tab col s3"><a href="#tab-settings" class="translate">Additional settings</a></li>
+            </ul>
         </div>
-    </div>
-    <div class="row table-page">
-        <div class="col s12" id="devices">
-            <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
-            <a class="btn-floating waves-effect waves-light blue table-button-scan translateT" title="Scan devices"><i class="material-icons">search</i></a>
-            <div class="table-values-div">
-                <table class="table-values">
-                    <thead>
-                    <tr>
-                        <th data-name="ip"   class="translate">IP</th>
-                        <th data-name="protocol" data-type="select" data-options="HOME;MULTI;RARE" class="translate">Protocol</th>
-                        <th data-buttons="delete"></th>
-                    </tr>
-                    </thead>
-                </table>
+        <div id="tab-main" class="col s12 page">
+            <div class="row">
+                <div class="col s6">
+                    <img src="ekey.png" alt="logo" class="logo">
+                </div>
+            </div>
+            <div class="row table-page">
+                <div class="col s12" id="devices">
+                    <a class="btn-floating waves-effect waves-light blue table-button-add"><i class="material-icons">add</i></a>
+                    <a class="btn-floating waves-effect waves-light blue table-button-scan translateT" title="Scan devices"><i class="material-icons">search</i></a>
+                    <div class="table-values-div">
+                        <table class="table-values">
+                            <thead>
+                            <tr>
+                                <th data-name="ip"   class="translate">IP</th>
+                                <th data-name="protocol" data-type="select" data-options="HOME;MULTI;RARE" class="translate">Protocol</th>
+                                <th data-buttons="delete"></th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-settings" class="col s2 page">
+            <div class="row">
+                <input class="value" id="port" type="number" min="0" max="65535">
+                <label for="port" class="translate">Own port</label>
             </div>
         </div>
     </div>
