@@ -12,11 +12,11 @@
 
 'use strict';
 
-const utils = require('@iobroker/adapter-core'); // Get common adapter utils
-const adapter = new utils.Adapter('ekey');
-const dgram   = require('dgram');
-let   devices = {};
-let   mServer = null;
+const utils       = require('@iobroker/adapter-core'); // Get common adapter utils
+const dgram       = require('dgram');
+const adapterName = require('./package.json').name.split('.').pop();
+let   devices     = {};
+let   mServer     = null;
 /**
  * The adapter instance
  * @type {ioBroker.Adapter}
@@ -28,7 +28,7 @@ let adapter;
  * @param {Partial<ioBroker.AdapterOptions>} [options]
  */
 function startAdapter(options) {
-    adapter = utils.adapter(Object.assign({}, options, {name: 'ekey'}));
+    adapter = utils.adapter(Object.assign({}, options, {name: adapterName}));
 
     adapter.on('unload', callback => onClose(callback));
 
