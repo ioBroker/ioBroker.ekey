@@ -3,7 +3,7 @@
 /*jshint expr: true*/
 'use strict';
 const expect = require('chai').expect;
-const setup  = require(__dirname + '/lib/setup');
+const setup  = require('./lib/setup');
 const dgram  = require('dgram');
 
 
@@ -89,11 +89,10 @@ function setupUdpServer(onReceive, onReady) {
     server.bind(56000, '127.0.0.1');
 }
 
-describe('Test ' + adapterShortName + ' adapter', function() {
+describe('Test ' + adapterShortName + ' adapter', () => {
     before('Test ' + adapterShortName + ' adapter: Start js-controller', function (_done) {
-        this.timeout(600000); // because of first install from npm
-
-        setup.setupController(function () {
+        this.timeout(600000);
+        setup.setupController(() => {
             let config = setup.getAdapterConfig();
             // enable adapter
             config.common.enabled  = true;
@@ -113,9 +112,10 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             setupUdpServer(onReceive, _sendMessage => {
                 sendMessage = _sendMessage;
 
-                setup.startController(true, (id, obj) => {}, (id, state) => {
-                        if (onStateChanged) onStateChanged(id, state);
-                    },
+                setup.startController(
+                    true,
+                    (id, obj) => {},
+                    (id, state) => onStateChanged && onStateChanged(id, state),
                     (_objects, _states) => {
                         objects = _objects;
                         states  = _states;
@@ -126,26 +126,21 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     });
 
     it('Test ' + adapterShortName + ' adapter: Check if adapter started', done => {
-        this.timeout(60000);
-
         checkConnectionOfAdapter(res => {
-            if (res) console.log(res);
+            res && console.log(res);
             expect(res).not.to.be.equal('Cannot check connection');
             objects.setObject('system.adapter.test.0', {
-                    common: {
-
-                    },
+                    common: {},
                     type: 'instance'
                 },
-                function () {
+                () => {
                     states.subscribeMessage('system.adapter.test.0');
                     done();
                 });
         });
-    });
+    }).timeout(60000);
 
     it('Test ' + adapterShortName + ' adapter: test HOME protocol', done => {
-        this.timeout(1000);
         expect(sendMessage).to.be.ok;
         sendMessage(Buffer.from('1_0005_1_801845670767_1_1', 'ascii'), 15000, '127.0.0.1');
         checkValueOfState('ekey.0.devices.127_0_0_1.user', '0005', () => {
@@ -153,7 +148,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 done();
             });
         });
-    });
+    }).timeout(1000);
 
     /*it('Test ' + adapterShortName + ' adapter: test Multi protocol', done => {
         this.timeout(1000);
@@ -196,7 +191,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     after('Test ' + adapterShortName + ' adapter: Stop js-controller', function (done) {
         this.timeout(10000);
 
-        setup.stopController(function (normalTerminated) {
+        setup.stopController(normalTerminated => {
             console.log('Adapter normal terminated: ' + normalTerminated);
             done();
         });

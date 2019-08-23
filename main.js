@@ -1,12 +1,16 @@
 /**
  *
- * ekey adapter bluefox <dogafox@gmail.com>
+ * ekey adapter
  *
  * Adapter for communication with UDP ekey converter
  *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2018-2019 ioBroker <dogafox@gmail.com>
+ *
  */
 /* jshint -W097 */
-/* jshint strict:true */
+/* jshint strict: true */
 /* jslint node: true */
 /* jslint esversion: 6 */
 
