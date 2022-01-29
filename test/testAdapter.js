@@ -107,7 +107,7 @@ describe('Test ' + adapterShortName + ' adapter', () => {
                     protocol: 'HOME'
                 }
             ];
-            setup.setAdapterConfig(config.common, config.native);
+            await setup.setAdapterConfig(config.common, config.native);
 
             setupUdpServer(onReceive, _sendMessage => {
                 sendMessage = _sendMessage;
