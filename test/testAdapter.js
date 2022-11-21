@@ -97,9 +97,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
 
-            config.native.host   = '127.0.0.1';
             config.native.port   = 15000;
-            config.native.defaultUpdateInterval   = 20;
             config.native.devices = [
                 {
                     ip: '127.0.0.1',
@@ -141,7 +139,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                 done();
             });
         });
-    }).timeout(1000);
+    }).timeout(5000);
 
     /*it('Test ' + adapterShortName + ' adapter: test Multi protocol', done => {
         this.timeout(1000);
