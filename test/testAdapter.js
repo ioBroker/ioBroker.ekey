@@ -61,7 +61,6 @@ function onReceive(msg, info) {
 }
 
 function setupUdpServer(onReceive, onReady) {
-
     const server = dgram.createSocket('udp4');
 
     function sendMessage(message, port, address) {
@@ -88,11 +87,12 @@ function setupUdpServer(onReceive, onReady) {
     server.bind(56000, '127.0.0.1');
 }
 
-describe(`Test ${adapterShortName} adapter`, () => {
+describe(`Test ${adapterShortName} adapter`, function () {
     before(`Test ${adapterShortName} adapter: Start js-controller`, function (_done) {
         this.timeout(600000);
+
         setup.setupController(async () => {
-            let config = setup.getAdapterConfig();
+            let config = await setup.getAdapterConfig();
             // enable adapter
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
@@ -119,7 +119,8 @@ describe(`Test ${adapterShortName} adapter`, () => {
                         objects = _objects;
                         states  = _states;
                         _done();
-                    });
+                    },
+                );
             });
         });
     });
@@ -128,14 +129,7 @@ describe(`Test ${adapterShortName} adapter`, () => {
         checkConnectionOfAdapter(res => {
             res && console.log(res);
             expect(res).not.to.be.equal('Cannot check connection');
-            objects.setObject('system.adapter.test.0', {
-                    common: {},
-                    type: 'instance'
-                },
-                () => {
-                    states.subscribeMessage('system.adapter.test.0');
-                    done();
-                });
+            done();
         });
     }).timeout(60000);
 
