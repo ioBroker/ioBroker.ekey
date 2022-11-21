@@ -7,7 +7,6 @@ const expect = require('chai').expect;
 const setup  = require('./lib/setup');
 const dgram  = require('dgram');
 
-
 let objects = null;
 let states  = null;
 let onStateChanged = null;
