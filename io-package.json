@@ -53,6 +53,9 @@
             "dogafox <dogafox@gmail.com>"
         ],
         "title":                    "ekey",
+        "titleLang": {
+            "en": "ekey"
+        },
         "desc":                     {
             "en": "Receives the finger reads from EKEY Converter UDP",
             "de": "Empfängt die Finger liest von Ekey Converter UDP",
@@ -78,7 +81,12 @@
         "type":                     "hardware",
         "keywords":                 ["iobroker", "ekey", "finger"],
         "loglevel":                 "info",
-        "enabled":                  true
+        "enabled":                  true,
+        "adminUI": {
+            "config":               "json"
+        },
+        "connectionType":           "local",
+        "dataSource":               "push"
     },
     "native": {
         "bind":                     "0.0.0.0",
@@ -88,7 +96,15 @@
                 "ip": "127.0.0.1",
                 "protocol": "HOME"
             }
-        ]
+        ],
+        "serialEnabled": false,
+        "serialPortName": "/dev/ttyUSB0",
+        "serialBaudrate": 9600,
+        "serialDatabits": 8,
+        "serialParity": "none",
+        "serialStopbits": 1,
+        "serialFlowcontrol": "none",
+        "serialTimeout": 5000
     },
     "objects": [],
     "instanceObjects": [

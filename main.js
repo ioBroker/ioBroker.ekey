@@ -6,7 +6,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2018-2019 ioBroker <dogafox@gmail.com>
+ * Copyright (c) 2018-2022 ioBroker <dogafox@gmail.com>
  *
  */
 /* jshint -W097 */
@@ -20,12 +20,27 @@ const utils       = require('@iobroker/adapter-core'); // Get common adapter uti
 const dgram       = require('dgram');
 const adapterName = require('./package.json').name.split('.').pop();
 let   devices     = {};
+let   UdpServer   = require('./lib/udp');
+let   SerialServer= require('./lib/serial');
+let   timeout     = null;
 let   mServer     = null;
+let   sServer     = null;
 /**
  * The adapter instance
  * @type {ioBroker.Adapter}
  */
 let adapter;
+
+const NET_ACTIONS = {
+    '0': 'ActionCodeNone',
+    '1': 'ActionCodeEnter',
+    '2': 'ActionCodeLeave',
+    '3': 'ActionCodeRefused',
+    '4': 'ActionCodeUnrecognized',
+    '5': 'ActionCodeAlarmDevOn',
+    '6': 'ActionCodeAlarmDevOff',
+    '15': 'ActionCodeReboot',
+};
 
 /**
  * Starts the adapter instance
@@ -44,13 +59,20 @@ function startAdapter(options) {
 }
 
 function onClose(callback) {
+    timeout && clearTimeout(timeout);
+    timeout = null;
+
     if (mServer) {
         mServer.close();
         mServer = null;
     }
 
-    if (callback) {
-        callback();
+    if (sServer) {
+        sServer.close()
+            .then(() => callback && callback());
+        sServer = null;
+    } else {
+        callback && callback();
     }
 }
 
@@ -80,74 +102,97 @@ function processMessage(obj) {
                         }
                     }
                 });
-                server.on('error', error => {
-                    adapter.log.error(error);
-                });
+                server.on('error', error => adapter.log.error(error));
                 server.on('listening', () => {
                     server.setBroadcast(true);
                     setImmediate(() => server.send(browse, 0, browse.length, 58009, '255.255.255.255'));
                 });
                 server.bind(58009);
 
-                setTimeout(() => {
+                timeout = setTimeout(() => {
+                    timeout = null;
                     server.close();
                     server = null;
                     adapter.sendTo(obj.from, obj.command, {result: devices}, obj.callback);
                 }, 3000);
+                break;
+
+            case 'listPorts':
+                if (obj.callback) {
+                    try {
+                        const { SerialPort } = require('serialport');
+                        if (SerialPort) {
+                            // read all found serial ports
+                            SerialPort.list()
+                                .then(ports => {
+                                    adapter.log.info(`List of port: ${JSON.stringify(ports)}`);
+                                    adapter.sendTo(obj.from, obj.command, ports.map(item => ({label: item.path, value: item.path})), obj.callback);
+                                })
+                                .catch(e => {
+                                    adapter.sendTo(obj.from, obj.command, [], obj.callback);
+                                    adapter.log.error(e)
+                                });
+                        } else {
+                            adapter.log.warn('Module serialport is not available');
+                            adapter.sendTo(obj.from, obj.command, [{label: 'Not available', value: ''}], obj.callback);
+                        }
+                    } catch (e) {
+                        adapter.sendTo(obj.from, obj.command, [{label: 'Not available', value: ''}], obj.callback);
+                    }
+                }
+
                 break;
         }
     }
 }
 
 function decodeHome(ip, message) {
-    const values = message.toString('ascii').split(/[;_?]/);
-    if (values.length < 6) {
-        adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
+    //     0    1       2       3         4       5
+    const [one, userId, finger, serialId, action, relay] = message.toString('ascii').split(/[;_?]/);
+    if (relay === undefined) {
+        adapter.log.warn(`Invalid packet length! ${message.toString('ascii')}`);
     } else
-    if (values[0] !== '1') {
-        adapter.log.warn(`Invalid packet type! ${values[0]}`);
+    if (one !== '1') {
+        adapter.log.warn(`Invalid packet type! ${one}`);
     } else {
-        if (values[4] === '1') values[4] = 'OPEN';
-        if (values[4] === '2') values[4] = 'REJECT';
-        adapter.log.debug(`USER ID: ${values[1]}, Finger ID: ${values[2]}, Serial ID: ${values[3]}, Action: ${values[4]}, Relais: ${values[5]}`);
-        const state = 'devices.' + ip.replace(/\./g, '_') + '.';
-        adapter.setState(state + 'user',   values[1], true);
-        adapter.setState(state + 'finger', values[2], true);
-        adapter.setState(state + 'serial', values[3], true);
-        adapter.setState(state + 'action', values[4], true);
-        adapter.setState(state + 'relay',  values[5], true);
+        adapter.log.debug(`USER ID: ${userId}, Finger ID: ${finger}, Serial ID: ${serialId}, Action: ${action === '1' ? 'OPEN' : (action === '2' ? 'REJECT' : action)}, Relais: ${relay}`);
+        const state = `devices.${ip.replace(/\./g, '_')}.`;
+        adapter.setState(`${state}user`,   userId, true);
+        adapter.setState(`${state}finger`, finger, true);
+        adapter.setState(`${state}serial`, serialId, true);
+        adapter.setState(`${state}action`, action === '1' ? 'OPEN' : (action === '2' ? 'REJECT' : action), true);
+        adapter.setState(`${state}relay`,  relay, true);
     }
 }
 
 function decodeMulti(ip, message) {
-    const values = message.toString('ascii').split(/[;_?]/);
-    if (values.length < 6) {
-        adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
+    //     0    1       2         3           4       5    6         7       8       9
+    const [one, userId, userName, userStatus, finger, key, serialId, fsName, action, input] = message.toString('ascii').split(/[;_?]/);
+    if (serialId === undefined) {
+        adapter.log.warn(`Invalid packet length! ${message.toString('ascii')}`);
     } else
-    if (values[0] !== '1') {
-        adapter.log.warn(`Invalid packet type! ${values[0]}`);
+    if (one !== '1') {
+        adapter.log.warn(`Invalid packet type! ${one}`);
     } else {
-        if (values[4] === '1') values[8] = 'OPEN';
-        if (values[4] === '2') values[8] = 'REJECT';
-        adapter.log.debug(`USER ID: ${values[1]}, Finger ID: ${values[4]}, Serial ID: ${values[6]}, Action: ${values[8]}, Input: ${values[9]}`);
-        const state = 'devices.' + ip.replace(/\./g, '_') + '.';
-        adapter.setState(state + 'user',        values[1], true);
-        adapter.setState(state + 'user_name',   values[2], true);
+        adapter.log.debug(`USER ID: ${userId}, Finger ID: ${finger}, Serial ID: ${serialId}, Action: ${action}, Input: ${input}`);
+        const state = `devices.${ip.replace(/\./g, '_')}.`;
+        adapter.setState(`${state}user`,        userId, true);
+        adapter.setState(`${state}user_name`,   userName, true);
 
         // 0 User is disabled
         // 1 User is enabled
         // - undefined
-        adapter.setState(state + 'user_status', values[3], true);
+        adapter.setState(`${state}user_status`, userStatus, true);
         // 1 = left-hand little finger
         // 2 = left-hand ring finger
         //     .
         //     .
         // 0 = right-hand little finger
         //     ,-,= no finger
-        adapter.setState(state + 'finger',      values[4], true);
-        adapter.setState(state + 'key',         values[5], true);
-        adapter.setState(state + 'serial',      values[6], true);
-        adapter.setState(state + 'fs_name',     values[7], true);
+        adapter.setState(`${state}finger`,      finger, true);
+        adapter.setState(`${state}key`,         key, true);
+        adapter.setState(`${state}serial`,      serialId, true);
+        adapter.setState(`${state}fs_name`,     fsName, true);
 
         // 1 Open
         // 2 Rejection of unknown finger
@@ -157,14 +202,14 @@ function decodeMulti(ip, message) {
         // 6 Rejection "Only ALWAYS users"
         // 7 FS not coupled to CP
         // 8 digital input
-        adapter.setState(state + 'action',      values[8], true);
+        adapter.setState(`${state}action`,      action, true);
 
         // 1 digital input 1
         // 2 digital input 2
         // 3 digital input 3
         // 4 digital input 4
         // - no digital input
-        adapter.setState(state + 'input',       values[9], true);
+        adapter.setState(`${state}input`,       input, true);
     }
 }
 
@@ -175,103 +220,229 @@ function decodeRare(ip, message) {
     }
 
     let offset = 0;
-    const nVersion = message.readInt32BE(offset);offset+=4;
+    const nVersion = message.readInt32BE(offset);
+    offset += 4;
+
     if (nVersion !== 3) {
         adapter.log.warn(`Invalid version length! ${nVersion} != 3`);
         return;
     }
-    const state = 'devices.' + ip.replace(/\./g, '_') + '.';
+    const state = `devices.${ip.replace(/\./g, '_')}.`;
 
-    // 0x88 = decimal 136.. open door with finger
-    // 0x89 = decimal 137.. poor quality or unknown finger
-    const nCmd = message.readInt32BE(offset);offset += 4;
+    // 0x88 = decimal 136, open door with finger
+    // 0x89 = decimal 137, poor quality or unknown finger
+    const nCmd = message.readInt32BE(offset);
+    offset += 4;
+
     if (nCmd !== 0x88 && nCmd !== 0x89) {
         adapter.log.warn(`Unknown command! 0x${nCmd.toString(16)}`);
         return;
     }
     // Address of finger scanner.
-    const nTerminalID = message.readInt32BE(offset);offset += 4;
-    const strTerminalSerial = message.toString('ascii', offset, offset + 14);offset += 14;
+    const nTerminalID = message.readInt32BE(offset);
+    offset += 4;
+
+    const strTerminalSerial = message.toString('ascii', offset, offset + 14);
+    offset += 14;
+
     // 0.. Channel 1 (Relay1)
     // 1.. Channel 2 (Relay2)
     // 2.. Channel 3 (Relay3)
-    const nRelayID = message[offset];offset++;
+    const nRelayID = message[offset];
+    offset++;
+
     if (nRelayID < 0 || nRelayID > 4) {
         adapter.log.warn(`Unknown nRelayID! ${nRelayID}`);
         return;
     }
 
     offset++; // reserved
-    const nUserID       = message.readInt32BE(offset);offset += 4;
-    const nFinger       = message.readInt32BE(offset);offset += 4;
-    const strEvent      = message.toString('ascii', offset, offset + 16);   offset += 16;
-    const sTime         = message.toString('ascii', offset, offset + 16);   offset += 16;
-    const strName       = message.readInt16BE(offset);offset += 2;
-    const strPersonalID = message.readInt16BE(offset);offset += 2;
+    const nUserID       = message.readInt32BE(offset);
+    offset += 4;
+
+    const nFinger       = message.readInt32BE(offset);
+    offset += 4;
+
+    const strEvent      = message.toString('ascii', offset, offset + 16);
+    offset += 16;
+
+    const sTime         = message.toString('ascii', offset, offset + 16);
+    offset += 16;
+
+    const strName       = message.readInt16BE(offset);
+    offset += 2;
+
+    const strPersonalID = message.readInt16BE(offset);
+    // offset += 2;
 
     const ts = new Date(sTime).getTime();
 
-    adapter.setState(state + 'finger', {ack: true, ts: ts, val: nFinger});
-    adapter.setState(state + 'user',   {ack: true, ts: ts, val: nUserID});
-    adapter.setState(state + 'serial', {ack: true, ts: ts, val: strTerminalSerial});
-    adapter.setState(state + 'action', {ack: true, ts: ts, val: nCmd === 0x88 ? 'OPEN' : 'REJECT'});
-    adapter.setState(state + 'relay',  {ack: true, ts: ts, val: nRelayID});
+    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger});
+    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID});
+    adapter.setState(`${state}serial`, {ack: true, ts, val: strTerminalSerial});
+    adapter.setState(`${state}action`, {ack: true, ts, val: nCmd === 0x88 ? 'OPEN' : 'REJECT'});
+    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID});
     //nTerminalID
     adapter.log.debug(`Received info ${nCmd === 0x88 ? 'OPEN' : 'REJECT'}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
 }
 
+function decodeNet(ip, message) {
+    if (message.length < 20) {
+        adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
+        return;
+    }
+
+    let offset = 0;
+    const nVersion = message.readInt32BE(offset);
+    offset += 4;
+
+    if (nVersion !== 3) {
+        adapter.log.warn(`Invalid version length! ${nVersion} != 3`);
+        return;
+    }
+    const state = `devices.${ip.replace(/\./g, '_')}.`;
+
+    // 0x88 = decimal 136, open door with finger
+    // 0x89 = decimal 137, poor quality or unknown finger
+    const actionCode = message.readInt32BE(offset);
+    offset += 4;
+
+    if (NET_ACTIONS[actionCode] === undefined) {
+        adapter.log.warn(`Unknown command! 0x${actionCode.toString(16)}`);
+        return;
+    }
+    // Address of finger scanner.
+    const nTerminalID = message.readInt32BE(offset);
+    offset += 4;
+
+    const strTerminalSerial = message.toString('ascii', offset, offset + 14);
+    offset += 14;
+
+    // 0.. Channel 1 (Relay1)
+    // 1.. Channel 2 (Relay2)
+    // 2.. Channel 3 (Relay3)
+    const nRelayID = message[offset];
+    offset++;
+
+    if (nRelayID < 0 || nRelayID > 4) {
+        adapter.log.warn(`Unknown nRelayID! ${nRelayID}`);
+        return;
+    }
+
+    offset++; // reserved
+    const nUserID       = message.readInt32BE(offset);
+    offset += 4;
+
+    const nFinger       = message.readInt32BE(offset);
+    offset += 4;
+
+    const strEvent      = message.toString('ascii', offset, offset + 16);
+    offset += 16;
+
+    const sTime         = message.toString('ascii', offset, offset + 16);
+    offset += 16;
+
+    const strName       = message.readInt16BE(offset);
+    offset += 2;
+
+    const strPersonalID = message.readInt16BE(offset);
+    // offset += 2;
+
+    const ts = new Date(sTime).getTime();
+
+    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger});
+    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID});
+    adapter.setState(`${state}serial`, {ack: true, ts, val: strTerminalSerial});
+    adapter.setState(`${state}action`, {ack: true, ts, val: NET_ACTIONS[actionCode]});
+    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID});
+    //nTerminalID
+    adapter.log.debug(`Received info ${NET_ACTIONS[actionCode]}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
+}
+
 function tasksDeleteDevice(tasks, ip) {
-    const id = adapter.namespace + '.devices.' + ip.replace(/[.\s]+/g, '_');
+    const id = `${adapter.namespace}.devices.${ip.replace(/[.\s]+/g, '_')}`;
     tasks.push({
         type: 'delete',
-        id:   id
+        id
     });
     tasks.push({
         type: 'delete',
-        id:   id + '.user'
+        id:   `${id}.user`
     });
     tasks.push({
         type: 'delete',
-        id:   id + '.finger'
+        id:   `${id}.finger`
     });
     tasks.push({
         type: 'delete',
-        id:   id + '.serial'
+        id:   `${id}.serial`
     });
     tasks.push({
         type: 'delete',
-        id:   id + '.action'
+        id:   `${id}.action`
     });
     tasks.push({
         type: 'delete',
-        id:   id + '.relay'
+        id:   `${id}.relay`
     });
 }
 
 function tasksAddDevice(tasks, ip, protocol) {
-    const id = adapter.namespace + '.devices.' + ip.replace(/[.\s]+/g, '_');
+    const _id = `${adapter.namespace}.devices.${ip.replace(/[.\s]+/g, '_')}`;
 
     tasks.push({
         type: 'add',
         obj:   {
-            _id: id,
+            _id,
             common: {
-                name: 'ekey ' + ip
+                name: `ekey ${ip}`
             },
             type: 'channel',
             native: {
-                ip: ip,
-                protocol: protocol
+                ip,
+                protocol,
             }
         }
     });
 
+    if (protocol !== 'serial') {
+        tasks.push({
+            type: 'add',
+            obj: {
+                _id: `${_id}.user`,
+                common: {
+                    name: `ekey ${ip} user ID`,
+                    write: false,
+                    read: true,
+                    type: 'string'
+                },
+                type: 'state',
+                native: {}
+            }
+        });
+    } else {
+        tasks.push({
+            type: 'add',
+            obj: {
+                _id: `${_id}.rawData`,
+                common: {
+                    name: `serial raw data`,
+                    write: false,
+                    read: true,
+                    type: 'string'
+                },
+                type: 'state',
+                native: {}
+            }
+        });
+    }
+
     tasks.push({
         type: 'add',
         obj:   {
-            _id: id + '.user',
+            _id: `${_id}.finger`,
             common: {
-                name: 'ekey ' + ip + ' user ID',
+                name: `ekey ${ip} finger ID`,
                 write: false,
                 read: true,
                 type: 'string'
@@ -282,51 +453,37 @@ function tasksAddDevice(tasks, ip, protocol) {
         }
     });
 
+    if (protocol === 'serial') {
+        return;
+    }
+
     tasks.push({
         type: 'add',
         obj:   {
-            _id: id + '.finger',
+            _id: `${_id}.serial`,
             common: {
-                name: 'ekey ' + ip + ' finger ID',
+                name: `ekey ${ip} serial ID`,
                 write: false,
                 read: true,
                 type: 'string'
             },
             type: 'state',
-            native: {
-            }
+            native: {}
         }
     });
 
     tasks.push({
         type: 'add',
         obj:   {
-            _id: id + '.serial',
+            _id: `${_id}.action`,
             common: {
-                name: 'ekey ' + ip + ' serial ID',
+                name: `ekey ${ip} action`,
                 write: false,
                 read: true,
                 type: 'string'
             },
             type: 'state',
-            native: {
-            }
-        }
-    });
-
-    tasks.push({
-        type: 'add',
-        obj:   {
-            _id: id + '.action',
-            common: {
-                name: 'ekey ' + ip + ' action',
-                write: false,
-                read: true,
-                type: 'string'
-            },
-            type: 'state',
-            native: {
-            }
+            native: {}
         }
     });
 
@@ -334,16 +491,15 @@ function tasksAddDevice(tasks, ip, protocol) {
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.relay',
+                _id: `${_id}.relay`,
                 common: {
-                    name: 'ekey ' + ip + ' relay',
+                    name: `ekey ${ip} relay`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
     }
@@ -351,76 +507,71 @@ function tasksAddDevice(tasks, ip, protocol) {
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.user_name',
+                _id: `${_id}.user_name`,
                 common: {
-                    name: 'ekey ' + ip + ' user_name',
+                    name: `ekey ${ip} user_name`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.user_status',
+                _id: `${_id}.user_status`,
                 common: {
-                    name: 'ekey ' + ip + ' user_status',
+                    name: `ekey ${ip} user_status`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.key',
+                _id: `${_id}.key`,
                 common: {
-                    name: 'ekey ' + ip + ' key',
+                    name: `ekey ${ip} key`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.fs_name',
+                _id: `${_id}.fs_name`,
                 common: {
-                    name: 'ekey ' + ip + ' fs_name',
+                    name: `ekey ${ip} fs_name`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
         tasks.push({
             type: 'add',
             obj:   {
-                _id: id + '.input',
+                _id: `${_id}.input`,
                 common: {
-                    name: 'ekey ' + ip + ' input',
+                    name: `ekey ${ip} input`,
                     write: false,
                     read: true,
                     type: 'string'
                 },
                 type: 'state',
-                native: {
-                }
+                native: {}
             }
         });
     }
@@ -435,9 +586,9 @@ function processTasks(tasks, callback) {
             case 'delete':
                 adapter.log.debug(`Delete STATE ${task.id}`);
                 adapter.delForeignState(task.id, err => {
-                    if (err) adapter.log.warn(`Cannot delete state: ${err}`);
+                    err && adapter.log.warn(`Cannot delete state: ${err}`);
                     adapter.delForeignObject(task.id, err => {
-                        if (err) adapter.log.warn(`Cannot delete object: ${err}`);
+                        err && adapter.log.warn(`Cannot delete object: ${err}`);
                         setImmediate(processTasks, tasks, callback);
                     });
                 });
@@ -448,13 +599,13 @@ function processTasks(tasks, callback) {
                 adapter.getForeignObject(task.obj._id, (err, obj) => {
                     if (!obj) {
                         adapter.setForeignObject(task.obj._id, task.obj, err => {
-                            if (err) adapter.log.warn(`Cannot set object: ${err}`);
+                            err && adapter.log.warn(`Cannot set object: ${err}`);
                             setImmediate(processTasks, tasks, callback);
                         });
                     } else {
                         obj.native = task.obj.native;
                         adapter.setForeignObject(obj._id, obj, err => {
-                            if (err) adapter.log.warn(`Cannot set object: ${err}`);
+                            err && adapter.log.warn(`Cannot set object: ${err}`);
                             setImmediate(processTasks, tasks, callback);
                         });
                     }
@@ -484,6 +635,9 @@ function syncConfig(callback) {
         if (channels) {
             for (let j = 0; j < channels.length; j++) {
                 let ip = channels[j].native.ip;
+                if (ip === 'serial') {
+                    continue;
+                }
                 if (!ip) {
                     adapter.log.warn(`No IP address found for ${JSON.stringify(channels[j])}`);
                     continue;
@@ -509,11 +663,21 @@ function syncConfig(callback) {
             }
         }
 
-        processTasks(tasks, function () {
+        if (adapter.config.serialEnabled) {
+            if (!channels.find(obj => obj._id === `${adapter.namespace}.serial`)) {
+                tasksAddDevice(tasks, 'serial', 'serial');
+            }
+        } else {
+            if (channels.find(obj => obj._id === `${adapter.namespace}.serial`)) {
+                tasksDeleteDevice(tasks, 'serial');
+            }
+        }
+
+        processTasks(tasks, () => {
             let tasks = [];
             if (configToAdd.length) {
                 for (let r = 0; r < adapter.config.devices.length; r++) {
-                    if (configToAdd.indexOf(adapter.config.devices[r].ip) !== -1) {
+                    if (configToAdd.includes(adapter.config.devices[r].ip)) {
                         tasksAddDevice(tasks, adapter.config.devices[r].ip, adapter.config.devices[r].protocol);
                     }
                 }
@@ -524,41 +688,70 @@ function syncConfig(callback) {
 }
 
 function startServer() {
-    mServer = dgram.createSocket('udp4');
-
-    mServer.on('error', err => {
-        adapter.log.error(`Cannot open socket:\n${err.stack}`);
-        mServer.close();
-        process.exit(20);
-    });
-
-    mServer.on('listening', () => {
-        const address = mServer.address();
-        adapter.log.info(`adapter listening ${address.address}:${address.port}`);
-    });
-
-    mServer.on('message', (message, rinfo) => {
-        if (devices[rinfo.address]) {
-            if (devices[rinfo.address] === 'HOME') {
-                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
-                decodeHome(rinfo.address, message);
-            } else if (devices[rinfo.address] === 'MULTI') {
-                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
-                decodeMulti(rinfo.address, message);
-            } else if (devices[rinfo.address] === 'RARE') {
-                // do not output rare
-                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.length + ' bytes');
-                decodeRare(rinfo.address, message);
+    if (adapter.config.devices.find(device => !device.serial)) {
+        mServer = new UdpServer(adapter.config.port);
+        mServer.on('data', (ip, port, data) => {
+            if (devices[ip]) {
+                if (devices[ip] === 'HOME') {
+                    adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
+                    decodeHome(ip, data);
+                } else if (devices[ip] === 'MULTI') {
+                    adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
+                    decodeMulti(ip, data);
+                } else if (devices[ip] === 'RARE') {
+                    // do not output rare
+                    adapter.log.debug(`${ip}:${port} - ${data.length} bytes`);
+                    decodeRare(ip, data);
+                } else if (devices[ip] === 'NET') {
+                    // do not output net
+                    adapter.log.debug(`${ip}:${port} - ${data.length} bytes`);
+                    decodeNet(ip, data);
+                } else {
+                    adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
+                    adapter.log.warn(`unknown communication type for ${ip}: ${devices[ip]}`);
+                }
             } else {
-                adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
-                adapter.log.warn(`unknown communication type for ${rinfo.address}: ${devices[rinfo.address]}`);
+                adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
             }
-        } else {
-            adapter.log.debug(rinfo.address + ':' + rinfo.port + ' - ' + message.toString('ascii'));
-        }
-    });
+        });
 
-    mServer.bind(adapter.config.port);
+        mServer.on('error', err => {
+            adapter.log.error(`Cannot open socket:\n${err.stack}`);
+            process.exit(20);
+        });
+
+        mServer.on('debug', message => adapter.log.info(message));
+        mServer.start();
+    }
+    const serial = adapter.config.devices.find(device => device.serial);
+    if (serial) {
+        sServer = new SerialServer(
+            adapter.config.serialPortName,
+            adapter.config.serialBaudrate,
+            adapter.config.serialDatabits,
+            adapter.config.serialParity,
+            adapter.config.serialStopbits,
+            adapter.config.serialFlowcontrol,
+            adapter.config.serialTimeout,
+        );
+
+        sServer.on('data', (data) => {
+            adapter.setState(`serial.rawData`, data.toString('hex'), true);
+        });
+        sServer.on('finger', finger => {
+            adapter.setState(`serial.finger`, finger, true);
+        });
+
+        sServer.on('error', err => {
+            adapter.log.error(`Error on serial port: ${err.toString()}`);
+            process.exit(20);
+        });
+
+        sServer.on('debug', message => adapter.log.debug(message));
+        sServer.on('info', message => adapter.log.info(message));
+        sServer.on('warn', message => adapter.log.warn(message));
+        sServer.start();
+    }
 }
 
 function main() {

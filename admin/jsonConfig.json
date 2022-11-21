@@ -1,0 +1,149 @@
+{
+  "i18n": true,
+  "type": "tabs",
+  "items": {
+    "_main": {
+      "type": "panel",
+      "label": "Devices",
+      "items": {
+        "devices": {
+          "type": "table",
+          "items": [
+            {
+              "type": "text",
+              "attr": "ip",
+              "title":  "IP",
+              "width": "40%"
+            },
+            {
+              "type": "select",
+              "attr": "protocol",
+              "title":  "Protocol",
+              "width": "20%",
+              "noTranslate": true,
+              "options": [
+                {"value": "HOME", "title": "HOME"},
+                {"value": "MULTI", "title": "MULTI"},
+                {"value": "RARE", "title": "RARE"},
+                {"value": "NET", "title": "NET"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "_settings": {
+      "type": "panel",
+      "label": "Additional settings",
+      "items": {
+        "port": {
+          "type": "number",
+          "label": "Own port",
+          "min": 0,
+          "max": 65535
+        }
+      }
+    },
+    "_serial": {
+      "type": "panel",
+      "label": "Serial port settings",
+      "items": {
+        "_serial": {
+          "type": "staticText",
+          "text": "These settings are used only if some device is connected to the serial port (RS485 or RS232)."
+        },
+        "serialEnabled": {
+          "newLine": true,
+          "type": "checkbox",
+          "label": "Use serial port for ekey"
+        },
+        "serialPortName": {
+          "newLine": true,
+          "type": "selectSendTo",
+          "command": "listPorts",
+          "label": "Port name",
+          "noTranslation": true,
+          "hidden": "!data.serialEnabled"
+        },
+        "serialBaudrate": {
+          "newLine": true,
+          "type": "select",
+          "label": "Baudrate",
+          "noTranslation": true,
+          "options": [
+            {"value": 300, "label": "300"},
+            {"value": 600, "label": "600"},
+            {"value": 1200, "label": "1200"},
+            {"value": 2400, "label": "2400"},
+            {"value": 4800, "label": "4800"},
+            {"value": 9600, "label": "9600"},
+            {"value": 19200, "label": "19200"},
+            {"value": 38400, "label": "38400"},
+            {"value": 57600, "label": "57600"},
+            {"value": 115200, "label": "115200"}
+          ],
+          "hidden": "!data.serialEnabled"
+        },
+        "serialDatabits": {
+          "newLine": true,
+          "type": "select",
+          "label": "Data bits",
+          "noTranslation": true,
+          "options": [
+            {"value": 5, "label": "5"},
+            {"value": 6, "label": "6"},
+            {"value": 7, "label": "7"},
+            {"value": 8, "label": "8"}
+          ],
+          "hidden": "!data.serialEnabled"
+        },
+        "serialParity": {
+          "newLine": true,
+          "type": "select",
+          "label": "Parity",
+          "noTranslation": true,
+          "options": [
+            {"value": "none", "label": "NONE"},
+            {"value": "odd", "label": "ODD"},
+            {"value": "even", "label": "EVEN"},
+            {"value": "mark", "label": "MARK"},
+            {"value": "space", "label": "SPACE"}
+          ],
+          "hidden": "!data.serialEnabled"
+        },
+        "serialStopbits": {
+          "newLine": true,
+          "type": "select",
+          "label": "Stop bits",
+          "noTranslation": true,
+          "options": [
+            {"value": 1, "label": "1"},
+            {"value": 2, "label": "2"},
+            {"value": 1.5, "label": "1.5"}
+          ],
+          "hidden": "!data.serialEnabled"
+        },
+        "serialFlowcontrol": {
+          "newLine": true,
+          "type": "select",
+          "label": "Flow control",
+          "noTranslation": true,
+          "options": [
+            {"value": "none", "label": "NONE"},
+            {"value": "rtscts", "label": "RTSCTS"},
+            {"value": "xon", "label": "XON"},
+            {"value": "xoff", "label": "XOFF"},
+            {"value": "xany", "label": "XANY"}
+          ],
+          "hidden": "!data.serialEnabled"
+        },
+        "serialTimeout": {
+          "newLine": true,
+          "type": "number",
+          "label": "Timeout in ms",
+          "hidden": "!data.serialEnabled"
+        }
+      }
+    }
+  }
+}

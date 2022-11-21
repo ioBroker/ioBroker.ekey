@@ -19,14 +19,14 @@ function checkConnectionOfAdapter(cb, counter) {
     counter = counter || 0;
     console.log('Try check #' + counter);
     if (counter > 30) {
-        if (cb) cb('Cannot check connection');
+        cb && cb('Cannot check connection');
         return;
     }
 
-    states.getState('system.adapter.' + adapterShortName + '.0.alive', function (err, state) {
+    states.getState(`system.adapter.${adapterShortName}.0.alive`, function (err, state) {
         if (err) console.error(err);
         if (state && state.val) {
-            if (cb) cb();
+            cb && cb();
         } else {
             setTimeout(function () {
                 checkConnectionOfAdapter(cb, counter + 1);
@@ -38,21 +38,19 @@ function checkConnectionOfAdapter(cb, counter) {
 function checkValueOfState(id, value, cb, counter) {
     counter = counter || 0;
     if (counter > 20) {
-        if (cb) cb('Cannot check value Of State ' + id);
-        return;
+        return cb && cb(`Cannot check value Of State ${id}`);
     }
 
     states.getState(id, function (err, state) {
-        if (err) console.error(err);
+        err && console.error(err);
         if (value === null && !state) {
-            if (cb) cb();
+            cb && cb();
         } else
         if (state && (value === undefined || state.val === value)) {
-            if (cb) cb();
+            cb && cb();
         } else {
-            setTimeout(function () {
-                checkValueOfState(id, value, cb, counter + 1);
-            }, 500);
+            setTimeout(() =>
+                checkValueOfState(id, value, cb, counter + 1), 500);
         }
     });
 }
@@ -89,10 +87,10 @@ function setupUdpServer(onReceive, onReady) {
     server.bind(56000, '127.0.0.1');
 }
 
-describe('Test ' + adapterShortName + ' adapter', () => {
-    before('Test ' + adapterShortName + ' adapter: Start js-controller', function (_done) {
+describe(`Test ${adapterShortName} adapter`, () => {
+    before(`Test ${adapterShortName} adapter: Start js-controller`, function (_done) {
         this.timeout(600000);
-        setup.setupController(() => {
+        setup.setupController(async () => {
             let config = setup.getAdapterConfig();
             // enable adapter
             config.common.enabled  = true;
@@ -125,7 +123,7 @@ describe('Test ' + adapterShortName + ' adapter', () => {
         });
     });
 
-    it('Test ' + adapterShortName + ' adapter: Check if adapter started', done => {
+    it(`Test ${adapterShortName} adapter: Check if adapter started`, done => {
         checkConnectionOfAdapter(res => {
             res && console.log(res);
             expect(res).not.to.be.equal('Cannot check connection');
@@ -140,7 +138,7 @@ describe('Test ' + adapterShortName + ' adapter', () => {
         });
     }).timeout(60000);
 
-    it('Test ' + adapterShortName + ' adapter: test HOME protocol', done => {
+    it(`Test ${adapterShortName} adapter: test HOME protocol`, done => {
         expect(sendMessage).to.be.ok;
         sendMessage(Buffer.from('1_0005_1_801845670767_1_1', 'ascii'), 15000, '127.0.0.1');
         checkValueOfState('ekey.0.devices.127_0_0_1.user', '0005', () => {
@@ -188,11 +186,11 @@ describe('Test ' + adapterShortName + ' adapter', () => {
         });
     });*/
 
-    after('Test ' + adapterShortName + ' adapter: Stop js-controller', function (done) {
+    after(`Test ${adapterShortName} adapter: Stop js-controller`, function (done) {
         this.timeout(10000);
 
         setup.stopController(normalTerminated => {
-            console.log('Adapter normal terminated: ' + normalTerminated);
+            console.log(`Adapter normal terminated: ${normalTerminated}`);
             done();
         });
     });
