@@ -1,6 +1,6 @@
 {
   "name": "iobroker.ekey",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Connects ekey with ioBroker",
   "author": "Bluefox <dogafox@gmail.com>",
   "contributors": [],
