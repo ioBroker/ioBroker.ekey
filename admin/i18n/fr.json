@@ -26,5 +26,7 @@
   "Timeout in ms": "Délai d'attente en ms",
   "Serial port settings": "Paramètres du port série",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "Ces paramètres ne sont utilisés que si un appareil est connecté au port série (RS485 ou RS232).",
-  "Protocol": "Protocole"
+  "Protocol": "Protocole",
+  "IP": "Adresse IP",
+  "Search": "Rechercher des appareils"
 }

@@ -26,5 +26,7 @@
   "Timeout in ms": "Limit czasu w ms",
   "Serial port settings": "Ustawienia portu szeregowego",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "Te ustawienia są używane tylko wtedy, gdy jakieś urządzenie jest podłączone do portu szeregowego (RS485 lub RS232).",
-  "Protocol": "Protokół"
+  "Protocol": "Protokół",
+  "IP": "Adres IP",
+  "Search": "Wyszukaj urządzenia"
 }

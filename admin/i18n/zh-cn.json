@@ -26,5 +26,7 @@
   "Timeout in ms": "以毫秒为单位的超时",
   "Serial port settings": "串口设置",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "仅当某些设备连接到串行端口（RS485 或 RS232）时才使用这些设置。",
-  "Protocol": "协议"
+  "Protocol": "协议",
+  "IP": "IP地址",
+  "Search": "搜索设备"
 }

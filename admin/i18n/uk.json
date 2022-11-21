@@ -26,5 +26,7 @@
   "Timeout in ms": "Час очікування в мс",
   "Serial port settings": "Параметри послідовного порту",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "Ці параметри використовуються, лише якщо якийсь пристрій підключено до послідовного порту (RS485 або RS232).",
-  "Protocol": "Протокол"
+  "Protocol": "Протокол",
+  "IP": "IP-адреса",
+  "Search": "Пошук пристроїв"
 }

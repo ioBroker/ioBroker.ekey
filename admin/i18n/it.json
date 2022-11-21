@@ -26,5 +26,7 @@
   "Timeout in ms": "Timeout in ms",
   "Serial port settings": "Impostazioni della porta seriale",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "Queste impostazioni vengono utilizzate solo se qualche dispositivo è connesso alla porta seriale (RS485 o RS232).",
-  "Protocol": "Protocollo"
+  "Protocol": "Protocollo",
+  "IP": "Indirizzo IP",
+  "Search": "Cerca dispositivi"
 }

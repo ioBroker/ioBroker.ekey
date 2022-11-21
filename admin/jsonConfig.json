@@ -6,26 +6,41 @@
       "type": "panel",
       "label": "Devices",
       "items": {
+        "_search": {
+          "newLine": true,
+          "icon": "search",
+          "type": "sendTo",
+          "command": "browse",
+          "variant": "outlined",
+          "label": "Search",
+          "jsonData": "{\"devices\": ${JSON.stringify(data.devices)}}",
+          "useNative": true,
+          "showProcess": true
+        },
         "devices": {
+          "newLine": true,
           "type": "table",
+          "sm": 12,
+          "md": 8,
+          "lg": 6,
           "items": [
             {
               "type": "text",
               "attr": "ip",
               "title":  "IP",
-              "width": "40%"
+              "width": "60%"
             },
             {
               "type": "select",
               "attr": "protocol",
               "title":  "Protocol",
-              "width": "20%",
-              "noTranslate": true,
+              "width": "40%",
+              "noTranslation": true,
               "options": [
-                {"value": "HOME", "title": "HOME"},
-                {"value": "MULTI", "title": "MULTI"},
-                {"value": "RARE", "title": "RARE"},
-                {"value": "NET", "title": "NET"}
+                {"value": "HOME", "label": "HOME"},
+                {"value": "MULTI", "label": "MULTI"},
+                {"value": "RARE", "label": "RARE"},
+                {"value": "NET", "label": "NET"}
               ]
             }
           ]
@@ -63,7 +78,10 @@
           "command": "listPorts",
           "label": "Port name",
           "noTranslation": true,
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialBaudrate": {
           "newLine": true,
@@ -82,10 +100,12 @@
             {"value": 57600, "label": "57600"},
             {"value": 115200, "label": "115200"}
           ],
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialDatabits": {
-          "newLine": true,
           "type": "select",
           "label": "Data bits",
           "noTranslation": true,
@@ -95,10 +115,12 @@
             {"value": 7, "label": "7"},
             {"value": 8, "label": "8"}
           ],
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialParity": {
-          "newLine": true,
           "type": "select",
           "label": "Parity",
           "noTranslation": true,
@@ -109,7 +131,10 @@
             {"value": "mark", "label": "MARK"},
             {"value": "space", "label": "SPACE"}
           ],
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialStopbits": {
           "newLine": true,
@@ -121,10 +146,12 @@
             {"value": 2, "label": "2"},
             {"value": 1.5, "label": "1.5"}
           ],
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialFlowcontrol": {
-          "newLine": true,
           "type": "select",
           "label": "Flow control",
           "noTranslation": true,
@@ -135,13 +162,18 @@
             {"value": "xoff", "label": "XOFF"},
             {"value": "xany", "label": "XANY"}
           ],
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         },
         "serialTimeout": {
-          "newLine": true,
           "type": "number",
           "label": "Timeout in ms",
-          "hidden": "!data.serialEnabled"
+          "hidden": "!data.serialEnabled",
+          "sm": 6,
+          "md": 3,
+          "lg": 2
         }
       }
     }

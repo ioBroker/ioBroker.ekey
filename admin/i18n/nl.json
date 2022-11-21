@@ -26,5 +26,7 @@
   "Timeout in ms": "Time-out in ms",
   "Serial port settings": "Seriële poort instellingen",
   "These settings are used only if some device is connected to the serial port (RS485 or RS232).": "Deze instellingen worden alleen gebruikt als een apparaat is aangesloten op de seriële poort (RS485 of RS232).",
-  "Protocol": "Protocol"
+  "Protocol": "Protocol",
+  "IP": "IP adres",
+  "Search": "Zoek apparaten"
 }

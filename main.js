@@ -79,7 +79,7 @@ function onClose(callback) {
 process.on('SIGINT', () => onClose());
 
 process.on('uncaughtException', err => {
-    adapter && adapter.log && adapter.log.warn('Exception: ' + err);
+    adapter && adapter.log && adapter.log.warn(`Exception: ${err}`);
     onClose();
 });
 
@@ -92,7 +92,15 @@ function processMessage(obj) {
         switch (obj.command) {
             case 'browse':
                 let server = dgram.createSocket('udp4');
-                let devices = [];
+                let devices = (obj.message && obj.message.devices) || [];
+                if (typeof devices === 'string') {
+                    try {
+                        devices = JSON.parse(devices);
+                    } catch (e) {
+                        adapter.log.error(`Cannot parse devices: ${e}`);
+                        devices = [];
+                    }
+                }
                 const browse = new Buffer([0x01, 0x1a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe8, 0x23, 0x18, 0x18]);
 
                 server.on('message', (message, rinfo) => {
@@ -113,7 +121,8 @@ function processMessage(obj) {
                     timeout = null;
                     server.close();
                     server = null;
-                    adapter.sendTo(obj.from, obj.command, {result: devices}, obj.callback);
+                    devices.push({ip: 'hallo'});
+                    adapter.sendTo(obj.from, obj.command, {native: {devices}}, obj.callback);
                 }, 3000);
                 break;
 

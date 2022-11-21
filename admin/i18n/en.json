@@ -1,4 +1,6 @@
 {
+  "IP": "IP Address",
+  "Search": "Search devices",
   "Options": "Settings",
   "Devices": "Devices",
   "host": "Gateway IP",
