@@ -4,7 +4,7 @@
 /* jshint expr: true*/
 'use strict';
 const expect = require('chai').expect;
-const setup  = require('./lib/setup');
+const setup = require('@iobroker/legacy-testing');
 const dgram  = require('dgram');
 
 let objects = null;
