@@ -332,7 +332,7 @@ function decodeNet(ip, message) {
     }
 
     let offset = 0;
-    const nVersion = message.readInt32BE(offset);
+    const nVersion = message.readInt32LE(offset);
     offset += 4;
 
     if (nVersion !== 3) {
@@ -343,7 +343,7 @@ function decodeNet(ip, message) {
 
     // 0x88 = decimal 136, open door with finger
     // 0x89 = decimal 137, poor quality or unknown finger
-    const actionCode = message.readInt32BE(offset);
+    const actionCode = message.readInt32LE(offset);
     offset += 4;
 
     if (NET_ACTIONS[actionCode] === undefined) {
@@ -354,7 +354,7 @@ function decodeNet(ip, message) {
     }
 
     // Address of finger scanner.
-    const nTerminalID = message.readInt32BE(offset);
+    const nTerminalID = message.readInt32LE(offset);
     offset += 4;
 
     const strTerminalSerial = message.toString('ascii', offset, offset + 14);
@@ -371,10 +371,10 @@ function decodeNet(ip, message) {
     }
 
     offset++; // reserved
-    const nUserID       = message.readInt32BE(offset);
+    const nUserID       = message.readInt32LE(offset);
     offset += 4;
 
-    const nFinger       = message.readInt32BE(offset);
+    const nFinger       = message.readInt32LE(offset);
     offset += 4;
 
     const strEvent      = message.toString('ascii', offset, offset + 16);
@@ -383,10 +383,10 @@ function decodeNet(ip, message) {
     const sTime         = message.toString('ascii', offset, offset + 16);
     offset += 16;
 
-    const strName       = message.readInt16BE(offset);
+    const strName       = message.readInt16LE(offset);
     offset += 2;
 
-    const strPersonalID = message.readInt16BE(offset);
+    const strPersonalID = message.readInt16LE(offset);
     // offset += 2;
 
     const ts = new Date(sTime).getTime();

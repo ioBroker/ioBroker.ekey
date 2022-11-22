@@ -3,19 +3,6 @@
     "name": "ekey",
     "version": "1.2.2",
     "news": {
-      "1.2.2": {
-        "en": "Added `net` protocol support\nAdded serial port support",
-        "de": "Net Protokoll Unterstützung\nUnterstützung für serielle Ports",
-        "ru": "Добавлена поддержка чистого протокола\nДобавлена поддержка серийного порта",
-        "pt": "Adicionado suporte de protocolo líquido\nAdicionado suporte de porta serial",
-        "nl": "Vermeld net protocol steun\nVermeldde seriebestrijding",
-        "fr": "Appui au protocole net\nAjout du support de port série",
-        "it": "Supporto del protocollo netto aggiunto\nAggiunto supporto porta seriale",
-        "es": "Apoyo al protocolo neto\nSoporte de puerto serie",
-        "pl": "Strona internetowa protokołu\nWsparcie dla portów seryjnych",
-        "uk": "Додано підтримку протоколу net\nДодано послідовний порт підтримки",
-        "zh-cn": "增加礼宾支助净额\n增加港口支助"
-      },
       "1.1.0": {
         "en": "Added compact mode\nOwn port is now configurable",
         "de": "Kompaktmodus hinzugefügt\nDer eigene Port ist jetzt konfigurierbar",
