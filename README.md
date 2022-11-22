@@ -31,7 +31,7 @@ Actually only finger hash is supported. To help to decode more data from device 
 <!--
 	### **WORK IN PROGRESS**
 -->
-### 1.2.0 (2022-11-21)
+### **WORK IN PROGRESS**
 * (bluefox) Added `net` protocol support
 * (bluefox) Added serial port support
 

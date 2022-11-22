@@ -35,6 +35,7 @@
   "files": [
     "admin/",
     "img/",
+    "lib/",
     "main.js",
     "io-package.json",
     "LICENSE"
