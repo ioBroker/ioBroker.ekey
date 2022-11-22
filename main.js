@@ -42,6 +42,35 @@ const NET_ACTIONS = {
     '15': 'ActionCodeReboot',
 };
 
+const NET_EVENTS = {
+    '1': 'Switch relay 1 with day switching',
+    '2': 'Relay 1 permanently on with day switching',
+    '3': 'Relay 1 permanently off',
+    '4': 'Relay 2 permanently on with day switching, LED on',
+    '5': 'Relay 2 permanently off, LED off',
+    '6': 'Relay 3 permanently on',
+    '7': 'Relay 4 permanently on',
+    '8': 'Switch relay 2',
+    '9': 'Switch relay 3',
+    '10': 'Switch relay 4',
+    '15': 'Toggle relay 1',
+    '16': 'Toggle relay 2',
+    '17': 'Toggle relay 3',
+    '18': 'Toggle relay 4',
+    '19': 'Denied: unknown',
+    '20': 'Denied: known',
+    '21': 'Switch local relay 1 with day switching',
+    '23': 'Local relay 1 permanently on with day switching',
+    '24': 'Local relay 1 permanently off',
+    '25': 'Toggle local relay 1',
+    '54': 'Relay 3 permanently off',
+    '55': 'Relay 4 permanently off',
+    '56': 'Relay 1 permanently on with day switching',
+    '57': 'Relay 2 permanently on with day switching',
+    '58': 'Relay 3 permanently on with day switching',
+    '59': 'Relay 4 permanently on with day switching',
+};
+
 /**
  * Starts the adapter instance
  * @param {Partial<ioBroker.AdapterOptions>} [options]
@@ -245,7 +274,6 @@ function decodeRare(ip, message) {
 
     if (nCmd !== 0x88 && nCmd !== 0x89) {
         adapter.log.warn(`Unknown command! 0x${nCmd.toString(16)}`);
-        return;
     }
     // Address of finger scanner.
     const nTerminalID = message.readInt32BE(offset);
@@ -286,16 +314,18 @@ function decodeRare(ip, message) {
 
     const ts = new Date(sTime).getTime();
 
-    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger});
-    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID});
+    const sCmd = nCmd === 0x88 ? 'OPEN' : (nCmd === 0x89 ? 'REJECT' : ('0x' + nCmd.toString('hex')));
+    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger.toString()});
+    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID.toString()});
     adapter.setState(`${state}serial`, {ack: true, ts, val: strTerminalSerial});
-    adapter.setState(`${state}action`, {ack: true, ts, val: nCmd === 0x88 ? 'OPEN' : 'REJECT'});
-    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID});
+    adapter.setState(`${state}action`, {ack: true, ts, val: sCmd});
+    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID.toString()});
     //nTerminalID
-    adapter.log.debug(`Received info ${nCmd === 0x88 ? 'OPEN' : 'REJECT'}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
+    adapter.log.debug(`Received info ${sCmd}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
 }
 
 function decodeNet(ip, message) {
+    // 03000000130000003f0c9954383030303030303030303030303000000000000000000000303030303030303030303030303030303230323231313232203130313134330000000000
     if (message.length < 20) {
         adapter.log.warn(`Invalid packet length! ${values.join('_')}`);
         return;
@@ -317,9 +347,12 @@ function decodeNet(ip, message) {
     offset += 4;
 
     if (NET_ACTIONS[actionCode] === undefined) {
-        adapter.log.warn(`Unknown command! 0x${actionCode.toString(16)}`);
-        return;
+        adapter.log.debug(`Unknown command! ${actionCode.toString()}`);
     }
+    if (NET_EVENTS[actionCode]) {
+        adapter.log.debug(`May be it is ${actionCode.toString()}: ${NET_EVENTS[actionCode]}`);
+    }
+
     // Address of finger scanner.
     const nTerminalID = message.readInt32BE(offset);
     offset += 4;
@@ -335,7 +368,6 @@ function decodeNet(ip, message) {
 
     if (nRelayID < 0 || nRelayID > 4) {
         adapter.log.warn(`Unknown nRelayID! ${nRelayID}`);
-        return;
     }
 
     offset++; // reserved
@@ -359,13 +391,13 @@ function decodeNet(ip, message) {
 
     const ts = new Date(sTime).getTime();
 
-    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger});
-    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID});
+    adapter.setState(`${state}finger`, {ack: true, ts, val: nFinger.toString()});
+    adapter.setState(`${state}user`,   {ack: true, ts, val: nUserID.toString()});
     adapter.setState(`${state}serial`, {ack: true, ts, val: strTerminalSerial});
-    adapter.setState(`${state}action`, {ack: true, ts, val: NET_ACTIONS[actionCode]});
-    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID});
-    //nTerminalID
-    adapter.log.debug(`Received info ${NET_ACTIONS[actionCode]}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
+    adapter.setState(`${state}action`, {ack: true, ts, val: actionCode.toString()});
+    adapter.setState(`${state}relay`,  {ack: true, ts, val: nRelayID.toString()});
+    // nTerminalID
+    adapter.log.debug(`Received info ${actionCode.toString()}, finger: ${nFinger}, user: ${nUserID}, serial: "${strTerminalSerial}", relay: ${nRelayID}, strEvent: "${strEvent}", sTime: "${sTime}", strName: ${strName}, strPersonalID: ${strPersonalID}, nTerminalID: ${nTerminalID}`)
 }
 
 function tasksDeleteDevice(tasks, ip) {
@@ -535,7 +567,12 @@ function tasksAddDevice(tasks, ip, protocol) {
                     name: `ekey ${ip} user_status`,
                     write: false,
                     read: true,
-                    type: 'string'
+                    type: 'string',
+                    states: {
+                        '-1': 'undefined',
+                        '1': 'enabled',
+                        '0': 'disabled',
+                    }
                 },
                 type: 'state',
                 native: {}
@@ -713,7 +750,7 @@ function startServer() {
                     decodeRare(ip, data);
                 } else if (devices[ip] === 'NET') {
                     // do not output net
-                    adapter.log.debug(`${ip}:${port} - ${data.length} bytes`);
+                    adapter.log.debug(`${ip}:${port} - ${data.toString('hex')}`);
                     decodeNet(ip, data);
                 } else {
                     adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
