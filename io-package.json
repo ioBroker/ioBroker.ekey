@@ -78,7 +78,9 @@
       "fr": "Reçoit les lectures de doigt de EKEY Converter UDP",
       "it": "Riceve le letture del dito da EKEY Converter UDP",
       "es": "Recibe las lecturas de los dedos de EKEY Converter UDP",
-      "pl": "Odbieranie odcisków palców od konwertera EKEY UDP"
+      "pl": "Odbieranie odcisków palców od konwertera EKEY UDP",
+      "uk": "Отримує зчитування пальців з конвертера EKEY UDP",
+      "ch-zn": "从 EKEY Converter UDP 接收指纹数据"
     },
     "platform": "Javascript/Node.js",
     "mode": "daemon",
@@ -93,9 +95,8 @@
     "license": "MIT",
     "type": "hardware",
     "keywords": [
-      "iobroker",
       "ekey",
-      "finger"
+      "finger scanner"
     ],
     "loglevel": "info",
     "enabled": true,
