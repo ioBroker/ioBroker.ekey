@@ -92,7 +92,10 @@
     "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
     "compact": true,
     "readme": "https://github.com/ioBroker/ioBroker.ekey/blob/master/README.md",
-    "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "type": "hardware",
     "keywords": [
       "ekey",
