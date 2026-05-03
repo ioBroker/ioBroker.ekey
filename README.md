@@ -48,6 +48,8 @@ Actually only finger hash is supported. To help to decode more data from device 
 ### 0.1.0
 * (bluefox) initial release
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 
 The MIT License (MIT)
