@@ -99,6 +99,7 @@
       "finger scanner"
     ],
     "loglevel": "info",
+    "tier": 2,
     "enabled": true,
     "adminUI": {
       "config": "json"
