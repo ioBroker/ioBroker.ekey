@@ -17,7 +17,7 @@
 'use strict';
 
 const utils       = require('@iobroker/adapter-core'); // Get common adapter utils
-const dgram       = require('dgram');
+const dgram       = require('node:dgram');
 const adapterName = require('./package.json').name.split('.').pop();
 let   devices     = {};
 let   UdpServer   = require('./lib/udp');
