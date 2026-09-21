@@ -85,7 +85,6 @@
     "mode": "daemon",
     "messagebox": true,
     "subscribe": "messagebox",
-    "materialize": true,
     "stopBeforeUpdate": true,
     "icon": "ekey.png",
     "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.ekey/master/admin/ekey.png",
