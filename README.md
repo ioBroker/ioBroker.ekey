@@ -34,6 +34,7 @@ Actually only finger hash is supported. To help to decode more data from device 
 
 ### **WORK IN PROGRESS**
 - (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+- (bluefox) Added responsive design for the admin settings
 
 ### 1.2.3 (2022-11-22)
 * (bluefox) Added `net` protocol support
