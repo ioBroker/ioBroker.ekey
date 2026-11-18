@@ -25,6 +25,7 @@ let   SerialServer= require('./lib/serial');
 let   timeout     = null;
 let   mServer     = null;
 let   sServer     = null;
+const warnedIps   = new Set();
 /**
  * The adapter instance
  * @type {ioBroker.Adapter}
@@ -150,7 +151,6 @@ function processMessage(obj) {
                     timeout = null;
                     server.close();
                     server = null;
-                    devices.push({ip: 'hallo'});
                     adapter.sendTo(obj.from, obj.command, {native: {devices}}, obj.callback);
                 }, 3000);
                 break;
@@ -758,6 +758,10 @@ function startServer() {
                 }
             } else {
                 adapter.log.debug(`${ip}:${port} - ${data.toString('ascii')}`);
+                if (!warnedIps.has(ip)) {
+                    warnedIps.add(ip);
+                    adapter.log.warn(`Received data from unknown IP ${ip}:${port}. Configured devices: ${Object.keys(devices).join(', ') || 'none'}. Please check the IP in the instance settings.`);
+                }
             }
         });
 
